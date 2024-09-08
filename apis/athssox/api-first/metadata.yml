@@ -1,0 +1,6 @@
+api:
+  version: 0.1.0
+  visibility: PUBLIC
+  metadata:
+    version: "1.0"
+  type: application
