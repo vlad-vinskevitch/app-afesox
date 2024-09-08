@@ -31,4 +31,4 @@ jobs:
         run: mvn clean package
 
       - name: Deploy to git repo
-        run: git deploy
+        run: mvn deploy
