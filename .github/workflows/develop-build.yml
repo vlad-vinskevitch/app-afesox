@@ -35,7 +35,7 @@ jobs:
                     <server>
                       <id>github</id>
                       <username>${{ github.actor }}</username>
-                      <password>${{ secrets.APP-AFESOX }}</password>
+                      <password>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</password>
                     </server>
                   </servers>
                 </settings>" > ~/.m2/settings.xml
