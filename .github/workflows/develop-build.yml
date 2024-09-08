@@ -27,10 +27,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      - name: Check if GitHub token is available
-        run: echo "Token is ${{ secrets.APP-AFESOX }}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.APP-AFESOX }}
+      - name: Verify GitHub Token Access
+        run: |
+          if [ -z "${{ secrets.APP-AFESOX }}" ]; then
+            echo "ERROR: Secret APP-AFESOX is not set or not accessible."
+            exit 1
+          else
+            echo "GitHub token is set."
+          fi
 
       - name: Setup Maven settings
         run: |
@@ -46,5 +50,5 @@ jobs:
                 </settings>" > ~/.m2/settings.xml
 
       - name: Build with Maven
-        run: mvn clean package 
+        run: mvn clean package
 
