@@ -56,11 +56,13 @@ jobs:
         run: mvn deploy
 
       - name: List GitHub Packages
-        run: curl -H "Authorization token ${{ secrets.APP_AFESOX }}" \
-          -H "Accept application/vnd.github.v3+json" \
-          https://api.github.com/user/packages
+        run: |
+          curl -H "Authorization: Bearer ${{ secrets.APP_AFESOX }}" \
+               -H "Accept: application/vnd.github.v3+json" \
+               https://api.github.com/user/packages
 
       - name: List Specific Package
-        run: curl -H "Authorization token ${{ secrets.APP_AFESOX }}" \
-          -H "Accept application/vnd.github.v3+json" \
-          https://api.github.com/repos/vlad-vinskevitch/app-afesox/packages
+        run: |
+          curl -H "Authorization: Bearer ${{ secrets.APP_AFESOX }}" \
+               -H "Accept: application/vnd.github.v3+json" \
+               https://api.github.com/repos/vlad-vinskevitch/app-afesox/packages
