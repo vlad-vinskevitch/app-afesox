@@ -35,13 +35,13 @@ jobs:
                     <server>
                       <id>github</id>
                       <username>${{ github.actor }}</username>
-                      <password>${{ secrets.TEST_PACKAGE_API }}</password>
+                      <password>${{ secrets.APP-AFESOX }}</password>
                     </server>
                   </servers>
                 </settings>" > ~/.m2/settings.xml
 
       - name: Print GitHub Token (Debugging)
-        run: echo "GitHub Token ${{ secrets.TEST_PACKAGE_API }}"
+        run: echo "${{ secrets.APP-AFESOX }}"
 
       - name: Build with Maven (Debug)
         run: mvn clean package -X
