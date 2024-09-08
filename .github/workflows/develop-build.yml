@@ -29,6 +29,8 @@ jobs:
 
       - name: Build with Maven
         run: mvn clean package
-
-      - name: Deploy to git repo
+        
+      - name: Deploy to GitHub Packages
         run: mvn deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.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 }}
