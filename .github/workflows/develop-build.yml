@@ -40,8 +40,11 @@ jobs:
                   </servers>
                 </settings>" > ~/.m2/settings.xml
 
-      - name: Print GitHub Token (Debugging)
-        run: echo "${{ secrets.APP-AFESOX }}"
+      - name: Print Placeholder (Debugging)
+        run: echo "Secret Value ${{ secrets.APP-AFESOX }}"
+
+      - name: Print Maven Settings (Debugging)
+        run: cat ~/.m2/settings.xml
 
       - name: Build with Maven (Debug)
         run: mvn clean package -X
