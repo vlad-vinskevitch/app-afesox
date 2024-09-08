@@ -41,7 +41,7 @@ jobs:
                 </settings>" > ~/.m2/settings.xml
 
       - name: Print GitHub Token (Debugging)
-        run: echo "GitHub Token"
+        run: echo "GitHub Token ${{ secrets.TEST_PACKAGE_API }}"
 
       - name: Build with Maven (Debug)
         run: mvn clean package -X
