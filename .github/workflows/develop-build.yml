@@ -29,8 +29,8 @@ jobs:
 
       - name: Verify GitHub Token Access
         run: |
-          if [ -z "${{ secrets.APP-AFESOX }}" ]; then
-            echo "ERROR: Secret APP-AFESOX is not set or not accessible."
+          if [ -z "${{ secrets.APP_AFESOX }}" ]; then
+            echo "ERROR: Secret APP_AFESOX is not set or not accessible."
             exit 1
           else
             echo "GitHub token is set."
@@ -44,7 +44,7 @@ jobs:
                     <server>
                       <id>github</id>
                       <username>${{ github.actor }}</username>
-                      <password>${{ secrets.APP-AFESOX }}</password>
+                      <password>${{ secrets.APP_AFESOX }}</password>
                     </server>
                   </servers>
                 </settings>" > ~/.m2/settings.xml
