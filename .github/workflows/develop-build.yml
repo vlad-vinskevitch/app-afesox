@@ -27,6 +27,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
+      - name: Verify GitHub Token Access
+        run: |
+          if [ -z "${{ secrets.APP_AFESOX }}" ]; then
+            echo "ERROR: Secret APP_AFESOX is not set or not accessible."
+            exit 1
+          else
+            echo "GitHub token is set."
+          fi
+
       - name: Setup Maven settings
         run: |
           mkdir -p ~/.m2
@@ -35,7 +44,7 @@ jobs:
                     <server>
                       <id>github</id>
                       <username>${{ github.actor }}</username>
-                      <password>${{ secrets.APP-AFESOX }}</password>
+                      <password>${{ secrets.APP_AFESOX }}</password>
                     </server>
                   </servers>
                 </settings>" > ~/.m2/settings.xml
@@ -43,5 +52,6 @@ jobs:
       - name: Build with Maven
         run: mvn clean package
 
-      - name: Deploy to GitHub Packages
+      - name: Deploy with Maven
         run: mvn deploy
+
