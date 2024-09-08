@@ -40,8 +40,15 @@ jobs:
                   </servers>
                 </settings>" > ~/.m2/settings.xml
 
+      - name: Print Maven settings for debugging (without sensitive data)
+        run: |
+          echo "Maven settings file:"
+          cat ~/.m2/settings.xml | grep -v '<password>'
+
       - name: Build with Maven
-        run: mvn clean package
+        run: mvn clean package -X
 
       - name: Deploy to GitHub Packages
-        run: mvn deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.APP-AFESOX }}
+        run: mvn deploy -X
