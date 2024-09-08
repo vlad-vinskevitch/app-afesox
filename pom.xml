@@ -69,9 +69,6 @@
               <generatorName>spring</generatorName>
               <apiPackage>com.baeldung.openapi.api</apiPackage>
               <modelPackage>com.baeldung.openapi.model</modelPackage>
-              <supportingFilesToGenerate>
-                <supportingFile>ApiUtil.java</supportingFile>
-              </supportingFilesToGenerate>
               <configOptions>
                 <delegatePattern>true</delegatePattern>
               </configOptions>
