@@ -10,7 +10,7 @@ servers:
 tags:
   - Dummy
 paths:
-  /api/v1/dummy:
+  /api/v2/dummy:
     get:
       summary: Dummy summary
       operationId: dummyOperation
