@@ -58,7 +58,7 @@ jobs:
       - name: Extract version from OpenAPI YAML
         id: extract_version
         run: |
-          VERSION=$(yq e '.info.version' openapi.yml)
+          VERSION=$(yq e '.info.version' apis/athssox/api-first/openapi.yml)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Build with Maven
