@@ -64,23 +64,29 @@ jobs:
       - name: Check if version already exists
         id: check_version
         run: |
-          # Fetch the list of packages from the repository
+          # Fetch the list of packages from the repository (Replace YOUR_USERNAME and PACKAGE_NAME)
           RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.APP_AFESOX }}" \
             -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/orgs/YOUR_ORG/packages/container/app-afesox/versions)
+            https://api.github.com/users/vlad-vinskevitch/packages/maven/app-afesox/versions)
 
           # Debug: Output the response to check its format
           echo "API Response: $RESPONSE"
 
-          # Use jq to check if a version already exists
-          PACKAGE_EXISTS=$(echo "$RESPONSE" | jq --arg VERSION "$VERSION" '.[] | select(.metadata.container.tags[] == $VERSION)')
-
-          # Check if the package exists
-          if [ -n "$PACKAGE_EXISTS" ]; then
-            echo "ERROR: A package with version $VERSION already exists. Exiting..."
-            exit 1
+          # Ensure the response is a valid JSON array
+          if echo "$RESPONSE" | jq empty; then
+            # Use jq to check if a version already exists
+            PACKAGE_EXISTS=$(echo "$RESPONSE" | jq --arg VERSION "$VERSION" '.[] | select(.name == $VERSION)')
+          
+            # Check if the package exists
+            if [ -n "$PACKAGE_EXISTS" ]; then
+              echo "ERROR: A package with version $VERSION already exists. Exiting..."
+              exit 1
+            else
+              echo "No package with version $VERSION exists. Proceeding with deployment."
+            fi
           else
-            echo "No package with version $VERSION exists. Proceeding with deployment."
+            echo "ERROR: API response is not a valid JSON. Exiting..."
+            exit 1
           fi
 
 
