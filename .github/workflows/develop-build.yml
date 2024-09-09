@@ -55,6 +55,9 @@ jobs:
           sudo apt update
           sudo apt install yq -y
 
+      - name: List files in the target directory
+        run: ls -la apis/athssox/api-first
+
       - name: Extract version from OpenAPI YAML
         id: extract_version
         run: |
@@ -69,3 +72,15 @@ jobs:
           VERSION: ${{ env.VERSION }}
         run: |
           mvn deploy -Dproject.version=$VERSION
+
+      - name: List GitHub Packages
+        run: |
+          curl -H "Authorization: Bearer ${{ secrets.APP_AFESOX }}" \
+               -H "Accept: application/vnd.github.v3+json" \
+               https://api.github.com/user/packages
+
+      - name: List Specific Package
+        run: |
+          curl -H "Authorization: Bearer ${{ secrets.APP_AFESOX }}" \
+               -H "Accept: application/vnd.github.v3+json" \
+               https://api.github.com/repos/vlad-vinskevitch/app-afesox/packages
