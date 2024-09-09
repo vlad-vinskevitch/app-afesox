@@ -49,20 +49,23 @@ jobs:
                   </servers>
                 </settings>" > ~/.m2/settings.xml
 
+      - name: Install yq
+        run: |
+          sudo add-apt-repository ppa:rmescandon/yq -y
+          sudo apt update
+          sudo apt install yq -y
+
+      - name: Extract version from OpenAPI YAML
+        id: extract_version
+        run: |
+          VERSION=$(yq e '.info.version' openapi.yml)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
       - name: Build with Maven
         run: mvn clean package
 
       - name: Deploy with Maven
-        run: mvn deploy
-
-      - name: List GitHub Packages
+        env:
+          VERSION: ${{ env.VERSION }}
         run: |
-          curl -H "Authorization: Bearer ${{ secrets.APP_AFESOX }}" \
-               -H "Accept: application/vnd.github.v3+json" \
-               https://api.github.com/user/packages
-
-      - name: List Specific Package
-        run: |
-          curl -H "Authorization: Bearer ${{ secrets.APP_AFESOX }}" \
-               -H "Accept: application/vnd.github.v3+json" \
-               https://api.github.com/repos/vlad-vinskevitch/app-afesox/packages
+          mvn deploy -Dproject.version=$VERSION
