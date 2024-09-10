@@ -64,15 +64,14 @@ jobs:
             echo "No YAML files changed."
             exit 1
           fi
-          # Convert list of files to a format suitable for environment variables
-          echo "CHANGED_FILES=${CHANGED_FILES// /,}" >> $GITHUB_ENV
+          echo "CHANGED_FILES=$CHANGED_FILES" >> $GITHUB_ENV
           echo "CHANGED_FILES=$CHANGED_FILES" # Log for debugging
 
       - name: Extract Version from changed YAML file
         id: extract_version
         run: |
-          IFS=',' read -r -a FILES <<< "${{ env.CHANGED_FILES }}"
-          for FILE in "${FILES[@]}"; do
+          CHANGED_FILES=$(echo "${{ env.CHANGED_FILES }}" | tr '\n' ' ')
+          for FILE in $CHANGED_FILES; do
             if [ -f "$FILE" ]; then
               VERSION=$(yq e '.info.version' "$FILE")
               PACKAGE=$(basename "$FILE" | sed 's/.yml//')
