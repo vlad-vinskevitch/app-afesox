@@ -69,15 +69,27 @@ jobs:
       - name: Extract Version from changed YAML file
         id: extract_version
         run: |
-          for FILE in $CHANGED_FILES; do
-            if [ -f "$FILE" ]; then
-              VERSION=$(yq e '.info.version' "$FILE")
-              PACKAGE=$(basename "$FILE" | sed 's/.yml//')
-              echo "VERSION=$VERSION" >> $GITHUB_ENV
-              echo "PACKAGE=$PACKAGE" >> $GITHUB_ENV
-              break
-            fi
-          done
+          # Get the list of changed files from the environment
+          CHANGED_FILES=${{ env.CHANGED_FILES }}
+
+          # Extract the first YAML file from the list
+          FIRST_FILE=$(echo "$CHANGED_FILES" | head -n 1)
+
+          if [ -z "$FIRST_FILE" ]; then
+            echo "No YAML file found in the changed files."
+            exit 1
+          fi
+
+          if [ -f "$FIRST_FILE" ]; then
+            VERSION=$(yq e '.info.version' "$FIRST_FILE")
+            PACKAGE=$(basename "$FIRST_FILE" | sed 's/.yml//')
+            echo "VERSION=$VERSION" >> $GITHUB_ENV
+            echo "PACKAGE=$PACKAGE" >> $GITHUB_ENV
+          else
+            echo "Changed file does not exist: $FIRST_FILE"
+            exit 1
+          fi
+
           if [ -z "${{ env.VERSION }}" ]; then
             echo "No version found in the changed YAML files."
             exit 1
