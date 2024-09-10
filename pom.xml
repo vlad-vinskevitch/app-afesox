@@ -65,7 +65,7 @@
               <goal>generate</goal>
             </goals>
             <configuration>
-              <inputSpec>${project.basedir}/apis/athssox/api-first/openapi-rest.yml</inputSpec>
+              <inputSpec>${project.basedir}/apis/**/api-first/openapi-rest.yml</inputSpec>
               <generatorName>spring</generatorName>
               <apiPackage>com.baeldung.openapi.api</apiPackage>
               <modelPackage>com.baeldung.openapi.model</modelPackage>
