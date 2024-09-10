@@ -49,23 +49,9 @@ jobs:
                   </servers>
                 </settings>" > ~/.m2/settings.xml
 
-      - name: Install yq
-        run: |
-          sudo add-apt-repository ppa:rmescandon/yq -y
-          sudo apt update
-          sudo apt install yq -y
-
-      - name: Extract version from OpenAPI YAML
-        id: extract_version
-        run: |
-          VERSION=$(yq e '.info.version' apis/**/api-first/openapi-rest.yml)
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-
       - name: Build with Maven
         run: mvn clean package
 
       - name: Deploy with Maven
-        env:
-          VERSION: ${{ env.VERSION }}
         run: |
-          mvn deploy -Dproject.version=$VERSION
+          mvn deploy
