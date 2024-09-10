@@ -49,10 +49,14 @@ jobs:
                   </servers>
                 </settings>" > ~/.m2/settings.xml
 
+      - name: Install yq
+        run: |
+          sudo apt-get update && sudo apt-get install -y yq
+
       - name: Extract Version from openapi-rest.yml
         id: extract_version
         run: |
-          VERSION=$(awk '/info:/ {getline; print}' ./apis/athssox/api-first/openapi-rest.yml | grep 'version:' | awk '{print $2}')
+          VERSION=$(yq eval '.info.version' ./apis/athssox/api-first/openapi-rest.yml)
           echo "Extracted version: $VERSION"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
