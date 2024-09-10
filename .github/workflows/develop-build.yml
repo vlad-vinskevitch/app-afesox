@@ -60,24 +60,20 @@ jobs:
           VERSION=$(yq e '.info.version' ./apis/athssox/api-first/openapi-rest.yml)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      - name: Check if Version is Already Deployed
+      - name: Check if Version Already Deployed
         id: check_version
         run: |
-          DEPLOYED_VERSIONS=$(curl -s -H "Authorization: token ${{ secrets.APP_AFESOX }}" "https://maven.pkg.github.com/vlad-vinskevitch/app-afesox/com/afesox/app-afesox/maven-metadata.xml" | grep -oPm1 "(?<=<version>)[^<]+")
-          if echo "$DEPLOYED_VERSIONS" | grep -q "${{ env.VERSION }}"; then
-            echo "Version ${{ env.VERSION }} is already deployed."
-            echo "skip_deploy=true" >> $GITHUB_ENV
+          # Fetch the list of versions from the Maven repository
+          MAVEN_REPO_URL="https://maven.pkg.github.com/vlad-vinskevitch/app-afesox/com/afesox/app-afesox/maven-metadata.xml"
+          RESPONSE=$(curl -s $MAVEN_REPO_URL)
+          if echo "$RESPONSE" | grep -q "<version>$VERSION</version>"; then
+            echo "ERROR: Version $VERSION is already deployed."
+            exit 1
           else
-            echo "Version ${{ env.VERSION }} is not deployed yet."
-            echo "skip_deploy=false" >> $GITHUB_ENV
+            echo "Version $VERSION is not yet deployed."
           fi
 
       - name: Build and Deploy with Maven
-        if: env.skip_deploy == 'false'
         run: |
           mvn clean package -Dproject.version=${{ env.VERSION }}
           mvn deploy -Dproject.version=${{ env.VERSION }}
-
-      - name: Skip Deployment
-        if: env.skip_deploy == 'true'
-        run: echo "Skipping deployment as version ${{ env.VERSION }} is already deployed."
