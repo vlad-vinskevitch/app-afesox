@@ -64,22 +64,23 @@ jobs:
             echo "No YAML files changed."
             exit 1
           fi
-          echo "CHANGED_FILES=$CHANGED_FILES" >> $GITHUB_ENV
+          echo "Changed YAML files:"
+          echo "$CHANGED_FILES"
+          echo "::set-output name=files::$CHANGED_FILES"
 
       - name: Extract Version from changed YAML file
         id: extract_version
         run: |
-          # Get the list of changed files from the environment
-          CHANGED_FILES=${{ env.CHANGED_FILES }}
-
-          # Extract the first YAML file from the list
-          FIRST_FILE=$(echo "$CHANGED_FILES" | head -n 1)
-
-          if [ -z "$FIRST_FILE" ]; then
-            echo "No YAML file found in the changed files."
+          CHANGED_FILES=${{ steps.detect_yaml.outputs.files }}
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No YAML files found."
             exit 1
           fi
 
+          # Process the first changed YAML file
+          FIRST_FILE=$(echo "$CHANGED_FILES" | head -n 1)
+          echo "Processing file: $FIRST_FILE"
+          
           if [ -f "$FIRST_FILE" ]; then
             VERSION=$(yq e '.info.version' "$FIRST_FILE")
             PACKAGE=$(basename "$FIRST_FILE" | sed 's/.yml//')
