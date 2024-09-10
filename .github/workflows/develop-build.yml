@@ -12,8 +12,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-        with:
-          fetch-depth: 2
 
       - name: Set up JDK 17
         uses: actions/setup-java@v3
@@ -59,40 +57,46 @@ jobs:
       - name: Detect changed YAML files
         id: detect_yaml
         run: |
+          # Get the list of changed YAML files
           CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep -E '\.yml$')
+          
+          # Check if any YAML files were changed
           if [ -z "$CHANGED_FILES" ]; then
             echo "No YAML files changed."
             exit 1
           fi
-          echo "CHANGED_FILES=$CHANGED_FILES" >> $GITHUB_ENV
-          echo "CHANGED_FILES=$CHANGED_FILES" # Log for debugging
 
-      - name: Extract Version from changed YAML file
-        id: extract_version
-        run: |
-          CHANGED_FILES=$(echo "${{ env.CHANGED_FILES }}" | tr '\n' ' ')
-          for FILE in $CHANGED_FILES; do
-            if [ -f "$FILE" ]; then
-              VERSION=$(yq e '.info.version' "$FILE")
-              PACKAGE=$(basename "$FILE" | sed 's/.yml//')
-              echo "VERSION=$VERSION" >> $GITHUB_ENV
-              echo "PACKAGE=$PACKAGE" >> $GITHUB_ENV
-              break
-            fi
-          done
-          if [ -z "${{ env.VERSION }}" ]; then
-            echo "No version found in the changed YAML files."
-            exit 1
-          fi
-          echo "Extracted version: $VERSION" # Log for debugging
+          # Log changed files for debugging
+          echo "Changed YAML files:"
+          echo "$CHANGED_FILES"
+
+          # Extract version and package based on the first changed YAML file
+          FIRST_CHANGED_FILE=$(echo "$CHANGED_FILES" | head -n 1)
+          VERSION=$(yq e '.info.version' "$FIRST_CHANGED_FILE")
+          PACKAGE=$(basename "$FIRST_CHANGED_FILE" | sed 's/\.[^.]*$//')
+          
+          # Log the extracted version and package
+          echo "VERSION=$VERSION"
+          echo "PACKAGE=$PACKAGE"
+
+          # Use environment variables directly in the next steps
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "PACKAGE=$PACKAGE" >> $GITHUB_ENV
 
       - name: Build and Deploy with Maven
         run: |
-          echo "Deploying to package: ${{ env.PACKAGE }} with version: ${{ env.VERSION }}"
+          if [ -z "${{ env.VERSION }}" ] || [ -z "${{ env.PACKAGE }}" ]; then
+            echo "Version or package information missing."
+            exit 1
+          fi
+
+          # Build the project
           mvn clean package -Dproject.version=${{ env.VERSION }}
-          if mvn deploy -Dproject.version=${{ env.VERSION }} -Dpackage=${{ env.PACKAGE }}; then
+
+          # Deploy the project to the corresponding package
+          if mvn deploy -Dproject.version=${{ env.VERSION }}; then
             echo "Deployment successful."
           else
-            echo "Deployment failed. Version ${{ env.VERSION }} might already be deployed."
+            echo "Deployment failed. Current version already deployed."
             exit 1
           fi
