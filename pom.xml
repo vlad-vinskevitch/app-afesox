@@ -7,10 +7,6 @@
   <version>${env.VERSION}</version>
   <packaging>jar</packaging>
 
-  <properties>
-    <project.version>${env.VERSION}</project.version>
-  </properties>
-
   <dependencies>
     <!-- OpenAPI Generator Core -->
     <dependency>
