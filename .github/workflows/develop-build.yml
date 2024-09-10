@@ -68,7 +68,16 @@ jobs:
           echo "$CHANGED_FILES"
           echo "::set-output name=files::$CHANGED_FILES"
 
-      - name: Check file existence and extract version
+      - name: Print changed YAML files content
+        run: |
+          CHANGED_FILES=${{ steps.detect_yaml.outputs.files }}
+          echo "Printing content of changed YAML files:"
+          for FILE in $CHANGED_FILES; do
+            echo "Content of $FILE:"
+            cat "$FILE"
+          done
+
+      - name: Extract Version from changed YAML file
         id: extract_version
         run: |
           CHANGED_FILES=${{ steps.detect_yaml.outputs.files }}
