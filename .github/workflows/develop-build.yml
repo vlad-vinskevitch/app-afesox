@@ -54,45 +54,40 @@ jobs:
           wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq
           chmod +x /usr/local/bin/yq
 
-      - name: Detect changed YAML files and set environment variables
-        id: detect_and_set_env
+      - name: Detect changed YAML files
+        id: detect_yaml
         run: |
-          # Get the list of changed YAML files
           CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep -E '\.yml$')
-          
           if [ -z "$CHANGED_FILES" ]; then
             echo "No YAML files changed."
             exit 1
           fi
+          echo "CHANGED_FILES=$CHANGED_FILES" >> $GITHUB_ENV
 
-          # Extract the first changed YAML file
-          FIRST_CHANGED_FILE=$(echo "$CHANGED_FILES" | head -n 1)
-
-          # Extract version from the changed YAML file
-          VERSION=$(yq e '.info.version' "$FIRST_CHANGED_FILE")
-          
-          # Log the version for debugging
-          echo "VERSION=$VERSION"
-          
-          # Set environment variables for the next steps
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "CHANGED_FILE=$FIRST_CHANGED_FILE" >> $GITHUB_ENV
-
-      - name: Build and Deploy with Maven
+      - name: Extract Version from changed YAML file
+        id: extract_version
         run: |
-          # Check if VERSION is set
+          for FILE in $CHANGED_FILES; do
+            if [ -f "$FILE" ]; then
+              VERSION=$(yq e '.info.version' "$FILE")
+              PACKAGE=$(basename "$FILE" | sed 's/.yml//')
+              echo "VERSION=$VERSION" >> $GITHUB_ENV
+              echo "PACKAGE=$PACKAGE" >> $GITHUB_ENV
+              break
+            fi
+          done
           if [ -z "${{ env.VERSION }}" ]; then
-            echo "Version not found in YAML file."
+            echo "No version found in the changed YAML files."
             exit 1
           fi
 
-          # Build the project
+      - name: Build and Deploy with Maven
+        run: |
+          echo "Deploying to package: ${{ env.PACKAGE }} with version: ${{ env.VERSION }}"
           mvn clean package -Dproject.version=${{ env.VERSION }}
-
-          # Deploy the project
-          if mvn deploy -Dproject.version=${{ env.VERSION }}; then
+          if mvn deploy -Dproject.version=${{ env.VERSION }} -Dpackage=${{ env.PACKAGE }}; then
             echo "Deployment successful."
           else
-            echo "Deployment failed. Current version already deployed."
+            echo "Deployment failed. Version ${{ env.VERSION }} might already be deployed."
             exit 1
           fi
