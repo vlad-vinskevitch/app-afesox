@@ -60,11 +60,8 @@ jobs:
           VERSION=$(yq e '.info.version' ./apis/athssox/api-first/openapi-rest.yml)
           echo "Extracted version: $VERSION"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
-      
 
-      - name: Build with Maven
-        run: mvn clean package -Dproject.version=${{ env.VERSION }}
-
-      - name: Deploy with Maven
+      - name: Build and Deploy with Maven
         run: |
+          mvn clean package -Dproject.version=${{ env.VERSION }}
           mvn deploy -Dproject.version=${{ env.VERSION }}
