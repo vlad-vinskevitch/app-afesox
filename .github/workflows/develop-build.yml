@@ -54,46 +54,42 @@ jobs:
           wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq
           chmod +x /usr/local/bin/yq
 
-      - name: Detect changed YAML files
-        id: detect_yaml
+      - name: Detect changed YAML files and set environment variables
+        id: detect_and_set_env
         run: |
           # Get the list of changed YAML files
           CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep -E '\.yml$')
           
-          # Check if any YAML files were changed
           if [ -z "$CHANGED_FILES" ]; then
             echo "No YAML files changed."
             exit 1
           fi
 
-          # Log changed files for debugging
-          echo "Changed YAML files:"
-          echo "$CHANGED_FILES"
-
-          # Extract version and package based on the first changed YAML file
+          # Extract the first changed YAML file
           FIRST_CHANGED_FILE=$(echo "$CHANGED_FILES" | head -n 1)
-          VERSION=$(yq e '.info.version' "$FIRST_CHANGED_FILE")
-          PACKAGE=$(basename "$FIRST_CHANGED_FILE" | sed 's/\.[^.]*$//')
-          
-          # Log the extracted version and package
-          echo "VERSION=$VERSION"
-          echo "PACKAGE=$PACKAGE"
 
-          # Use environment variables directly in the next steps
+          # Extract version from the changed YAML file
+          VERSION=$(yq e '.info.version' "$FIRST_CHANGED_FILE")
+          
+          # Log the version for debugging
+          echo "VERSION=$VERSION"
+          
+          # Set environment variables for the next steps
           echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "PACKAGE=$PACKAGE" >> $GITHUB_ENV
+          echo "CHANGED_FILE=$FIRST_CHANGED_FILE" >> $GITHUB_ENV
 
       - name: Build and Deploy with Maven
         run: |
-          if [ -z "${{ env.VERSION }}" ] || [ -z "${{ env.PACKAGE }}" ]; then
-            echo "Version or package information missing."
+          # Check if VERSION is set
+          if [ -z "${{ env.VERSION }}" ]; then
+            echo "Version not found in YAML file."
             exit 1
           fi
 
           # Build the project
           mvn clean package -Dproject.version=${{ env.VERSION }}
 
-          # Deploy the project to the corresponding package
+          # Deploy the project
           if mvn deploy -Dproject.version=${{ env.VERSION }}; then
             echo "Deployment successful."
           else
