@@ -52,7 +52,7 @@ jobs:
       - name: Extract Version from openapi-rest.yml
         id: extract_version
         run: |
-          VERSION=$(grep 'info.version:' ./apis/athssox/api-first/openapi-rest.yml | awk '{print $2}')
+          VERSION=$(grep -A 1 'info:' ./apis/athssox/api-first/openapi-rest.yml | grep 'version:' | sed 's/[^0-9.]*//g')
           echo "Extracted version: $VERSION"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
