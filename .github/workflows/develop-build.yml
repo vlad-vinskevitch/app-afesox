@@ -51,14 +51,16 @@ jobs:
 
       - name: Install yq
         run: |
-          sudo apt-get update && sudo apt-get install -y yq
+          wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq
+          chmod +x /usr/local/bin/yq
 
       - name: Extract Version from openapi-rest.yml
         id: extract_version
         run: |
-          VERSION=$(yq eval '.info.version' ./apis/athssox/api-first/openapi-rest.yml)
+          VERSION=$(yq e '.info.version' ./apis/athssox/api-first/openapi-rest.yml)
           echo "Extracted version: $VERSION"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
+      
 
       - name: Build with Maven
         run: mvn clean package -Dproject.version=${{ env.VERSION }}
