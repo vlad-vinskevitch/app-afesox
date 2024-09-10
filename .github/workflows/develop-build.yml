@@ -49,9 +49,15 @@ jobs:
                   </servers>
                 </settings>" > ~/.m2/settings.xml
 
+      - name: Extract Version from openapi-rest.yml
+        id: extract_version
+        run: |
+          VERSION=$(grep 'version:' /apis/athssox/api-first/openapi-rest.yml | awk '{print $2}')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
       - name: Build with Maven
-        run: mvn clean package
+        run: mvn clean package -Dproject.version=${{ env.VERSION }}
 
       - name: Deploy with Maven
         run: |
-          mvn deploy
+          mvn deploy -Dproject.version=${{ env.VERSION }}
