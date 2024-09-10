@@ -52,7 +52,8 @@ jobs:
       - name: Extract Version from openapi-rest.yml
         id: extract_version
         run: |
-          VERSION=$(grep 'version:' ./apis/athssox/api-first/openapi-rest.yml | awk '{print $2}')
+          VERSION=$(grep 'info.version:' ./apis/athssox/api-first/openapi-rest.yml | awk '{print $2}')
+          echo "Extracted version: $VERSION"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Build with Maven
