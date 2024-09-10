@@ -62,17 +62,13 @@ jobs:
 
       - name: Build and Deploy with Maven
         run: |
+          # Build the project
           mvn clean package -Dproject.version=${{ env.VERSION }}
-          set +e
-          mvn deploy -Dproject.version=${{ env.VERSION }}
-          EXIT_CODE=$?
-          if [ $EXIT_CODE -eq 1 ]; then
-            if grep -q 'status: 409 Conflict' ~/.m2/repository/logs/maven-deploy.log; then
-              echo "The version ${VERSION} is already deployed. Deployment skipped."
-              exit 0
-            else
-              echo "Deployment failed due to an unexpected error."
-              exit 1
-            fi
+
+          # Deploy the project
+          if mvn deploy -Dproject.version=${{ env.VERSION }}; then
+            echo "Deployment successful."
+          else
+            echo "Deployment failed. Check the version already deployed."
+            exit 1
           fi
-          exit $EXIT_CODE
