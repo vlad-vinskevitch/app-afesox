@@ -54,21 +54,40 @@ jobs:
           wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq
           chmod +x /usr/local/bin/yq
 
-      - name: Extract Version from openapi-rest.yml
+      - name: Detect changed YAML files
+        id: detect_yaml
+        run: |
+          CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep -E '\.yml$')
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No YAML files changed."
+            exit 1
+          fi
+          echo "CHANGED_FILES=$CHANGED_FILES" >> $GITHUB_ENV
+
+      - name: Extract Version from changed YAML file
         id: extract_version
         run: |
-          VERSION=$(yq e '.info.version' ./apis/athssox/api-first/openapi-rest.yml)
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          for FILE in $CHANGED_FILES; do
+            if [ -f "$FILE" ]; then
+              VERSION=$(yq e '.info.version' "$FILE")
+              PACKAGE=$(basename "$FILE" | sed 's/.yml//')
+              echo "VERSION=$VERSION" >> $GITHUB_ENV
+              echo "PACKAGE=$PACKAGE" >> $GITHUB_ENV
+              break
+            fi
+          done
+          if [ -z "${{ env.VERSION }}" ]; then
+            echo "No version found in the changed YAML files."
+            exit 1
+          fi
 
       - name: Build and Deploy with Maven
         run: |
-          # Build the project
+          echo "Deploying to package: ${{ env.PACKAGE }} with version: ${{ env.VERSION }}"
           mvn clean package -Dproject.version=${{ env.VERSION }}
-
-          # Deploy the project
-          if mvn deploy -Dproject.version=${{ env.VERSION }}; then
+          if mvn deploy -Dproject.version=${{ env.VERSION }} -Dpackage=${{ env.PACKAGE }}; then
             echo "Deployment successful."
           else
-            echo "Deployment failed. Check the version already deployed."
+            echo "Deployment failed. Version ${{ env.VERSION }} might already be deployed."
             exit 1
           fi
