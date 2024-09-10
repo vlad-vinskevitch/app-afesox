@@ -60,20 +60,19 @@ jobs:
           VERSION=$(yq e '.info.version' ./apis/athssox/api-first/openapi-rest.yml)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      - name: Check if Version Already Deployed
-        id: check_version
-        run: |
-          # Fetch the list of versions from the Maven repository
-          MAVEN_REPO_URL="https://maven.pkg.github.com/vlad-vinskevitch/app-afesox/com/afesox/app-afesox/maven-metadata.xml"
-          RESPONSE=$(curl -s $MAVEN_REPO_URL)
-          if echo "$RESPONSE" | grep -q "<version>$VERSION</version>"; then
-            echo "ERROR: Version $VERSION is already deployed."
-            exit 1
-          else
-            echo "Version $VERSION is not yet deployed."
-          fi
-
       - name: Build and Deploy with Maven
         run: |
           mvn clean package -Dproject.version=${{ env.VERSION }}
+          set +e
           mvn deploy -Dproject.version=${{ env.VERSION }}
+          EXIT_CODE=$?
+          if [ $EXIT_CODE -eq 1 ]; then
+            if grep -q 'status: 409 Conflict' ~/.m2/repository/logs/maven-deploy.log; then
+              echo "The version ${VERSION} is already deployed. Deployment skipped."
+              exit 0
+            else
+              echo "Deployment failed due to an unexpected error."
+              exit 1
+            fi
+          fi
+          exit $EXIT_CODE
