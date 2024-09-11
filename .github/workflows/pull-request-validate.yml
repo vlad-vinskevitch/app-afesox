@@ -13,7 +13,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
         with:
-          fetch-depth: 1  # Only fetch the current commit
+          fetch-depth: 1  # Ensure we have the current commit to check files
 
       - name: Install OpenAPI Generator CLI
         run: |
@@ -25,12 +25,12 @@ jobs:
 
       - name: Validate OpenAPI files
         run: |
-          # Find all openapi.yml files in the repository
-          OPENAPI_FILES=$(find . -type f -name 'openapi.yml')
+          # Find all openapi-rest.yml files in the repository
+          OPENAPI_FILES=$(find . -type f -name 'openapi-rest.yml')
           
           if [ -z "$OPENAPI_FILES" ]; then
             echo "No OpenAPI files found to validate."
-            exit 0  # Exit with 0 to avoid failing the job if there are no openapi.yml files.
+            exit 0  # Exit with 0 if no files are found
           fi
 
           # Iterate over each OpenAPI file and validate it
