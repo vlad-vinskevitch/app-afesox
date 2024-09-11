@@ -88,14 +88,14 @@ jobs:
           FIRST_FILE=$(echo "$CHANGED_FILES" | head -n 1)
           echo "Processing file: $FIRST_FILE"
           
-          if [ -f "$FIRST_FILE" ]; then
-            VERSION=$(yq e '.info.version' "$FIRST_FILE")
+          if [ -f "./$FIRST_FILE" ]; then  # Use ./ to reference the file from the repository root
+            VERSION=$(yq e '.info.version' "./$FIRST_FILE")
             PACKAGE=$(basename "$FIRST_FILE" | sed 's/.yml//')
           
             echo "VERSION=$VERSION" >> $GITHUB_ENV
             echo "PACKAGE=$PACKAGE" >> $GITHUB_ENV
           else
-            echo "Changed file does not exist: $FIRST_FILE"
+            echo "Changed file does not exist: ./$FIRST_FILE"
             exit 1
           fi
 
