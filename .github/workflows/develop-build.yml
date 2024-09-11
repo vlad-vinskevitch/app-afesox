@@ -75,24 +75,36 @@ jobs:
         id: extract_info
         run: |
           CHANGED_FILES=${{ steps.detect_yaml.outputs.files }}
+          echo "Processing changed files:"
+          echo "$CHANGED_FILES"
           
+          # Initialize variables
+          VERSION=""
+          PACKAGE_NAME=""
+
           # Process each changed YAML file
           for FILE in $CHANGED_FILES; do
             FILE="./$FILE"  # Ensure the path is relative from the root
+            echo "Processing file: $FILE"
+          
             if [[ "$FILE" == *"metadata.yml" ]]; then
               # Extract version and package from metadata.yml
               VERSION=$(yq e '.api.version' "$FILE")
               PACKAGE_NAME=$(yq e '.api.metadata.name' "$FILE")
-              echo "VERSION=$VERSION" >> $GITHUB_ENV
-              echo "PACKAGE=${PACKAGE_NAME}-stable" >> $GITHUB_ENV
+              echo "Extracted version: $VERSION"
+              echo "Extracted name: $PACKAGE_NAME"
             fi
           done
 
           # Check if version and package are set
-          if [ -z "${VERSION}" ] || [ -z "${PACKAGE}" ]; then
+          if [ -z "${VERSION}" ] || [ -z "${PACKAGE_NAME}" ]; then
             echo "No version or package found."
             exit 1
           fi
+
+          # Export variables
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "PACKAGE=${PACKAGE_NAME}-stable" >> $GITHUB_ENV
 
       - name: Build and Deploy with Maven
         run: |
