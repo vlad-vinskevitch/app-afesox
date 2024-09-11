@@ -97,9 +97,12 @@ jobs:
             exit 1
           fi
 
+          # Construct the new artifactId
+          ARTIFACT_ID="app-afesox-${NAME}-stable"
+
           # Export variables correctly using environment files
           echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "ARTIFACT_ID=$NAME" >> $GITHUB_ENV
+          echo "ARTIFACT_ID=$ARTIFACT_ID" >> $GITHUB_ENV
 
       - name: Build and Deploy with Maven
         run: |
