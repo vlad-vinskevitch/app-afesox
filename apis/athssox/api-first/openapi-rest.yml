@@ -8,7 +8,7 @@ servers:
   - description: Localhost (dev only)
     url: 'http://localhost:8080/athssox'
 tags:
-  - Dummy
+  - name: Dummy
 paths:
   /api/v1/dummy:
     get:
