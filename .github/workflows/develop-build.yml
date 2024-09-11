@@ -100,6 +100,7 @@ jobs:
             echo "Extracted version: $VERSION"
             echo "Extracted package: $PACKAGE"
 
+            # Export variables correctly using environment files
             echo "VERSION=$VERSION" >> $GITHUB_ENV
             echo "PACKAGE=$PACKAGE" >> $GITHUB_ENV
           else
@@ -107,19 +108,20 @@ jobs:
             exit 1
           fi
 
-          if [ -z "${{ env.VERSION }}" ]; then
-            echo "No version found in the changed YAML files."
+      - name: Build and Deploy with Maven
+        run: |
+          # Check if the variables are properly set
+          if [ -z "${VERSION}" ] || [ -z "${PACKAGE}" ]; then
+            echo "VERSION or PACKAGE is not set correctly."
             exit 1
           fi
 
-      - name: Build and Deploy with Maven
-        run: |
-          echo "Deploying to package: ${{ env.PACKAGE }} with version: ${{ env.VERSION }}"
-          mvn clean package -Dproject.version=${{ env.VERSION }}
+          echo "Deploying to package: ${PACKAGE} with version: ${VERSION}"
+          mvn clean package -Dproject.version=${VERSION}
           
-          if mvn deploy -Dproject.version=${{ env.VERSION }} -Dpackage=${{ env.PACKAGE }}; then
+          if mvn deploy -Dproject.version=${VERSION} -Dpackage=${PACKAGE}; then
             echo "Deployment successful."
           else
-            echo "Deployment failed. Version ${{ env.VERSION }} might already be deployed."
+            echo "Deployment failed. Version ${VERSION} might already be deployed."
             exit 1
           fi
