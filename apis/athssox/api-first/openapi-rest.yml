@@ -1,14 +1,14 @@
 openapi: 3.0.0
 info:
   title: API Auth Sitionix
-  version: 0.1.20
+  version: 0.1.22
   contact:
     name: APP Sitionix
 servers:
   - description: Localhost (dev only)
     url: 'http://localhost:8080/athssox'
 tags:
-  - Dummy
+  - name: Dummy
 paths:
   /api/v1/dummy:
     get:
@@ -23,7 +23,12 @@ paths:
           schema:
             type: integer
             format: int64
-
+        - name: statusId
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
       responses:
         '200':
           description: A list of pets
