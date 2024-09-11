@@ -61,33 +61,35 @@ jobs:
           CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep -E '\.yml$' | grep -v '^\.github/')
           
           if [ -z "$CHANGED_FILES" ]; then
-            echo "No YAML files changed outside of .github directory."
+            echo "No relevant YAML files changed."
             exit 1
           fi
-          
-          # Output to a temporary file for further processing
-          echo "$CHANGED_FILES" > changed_files.txt
 
-      - name: Extract Version from changed YAML file
-        id: extract_version
+          echo "Changed YAML files:"
+          echo "$CHANGED_FILES"
+
+          # Set the changed files list as output
+          echo "::set-output name=files::$CHANGED_FILES"
+
+      - name: Extract Version and Package
+        id: extract_info
         run: |
-          # Read the changed files list from the temporary file
-          CHANGED_FILES=$(cat changed_files.txt)
+          CHANGED_FILES=${{ steps.detect_yaml.outputs.files }}
           
-          # Process the first changed YAML file
-          FIRST_FILE=$(echo "$CHANGED_FILES" | head -n 1)
-          
-          # Check if the file exists
-          if [ -f "$FIRST_FILE" ]; then
-            # Extract version and package name using yq
-            VERSION=$(yq e '.info.version' "$FIRST_FILE")
-            PACKAGE=$(basename "$FIRST_FILE" | sed 's/.yml//')
+          # Process each changed YAML file
+          for FILE in $CHANGED_FILES; do
+            if [[ "$FILE" == *"metadata.yml" ]]; then
+              # Extract version and package from metadata.yml
+              VERSION=$(yq e '.api.version' "$FILE")
+              PACKAGE_NAME=$(yq e '.api.metadata.name' "$FILE")
+              echo "VERSION=$VERSION" >> $GITHUB_ENV
+              echo "PACKAGE=${PACKAGE_NAME}-stable" >> $GITHUB_ENV
+            fi
+          done
 
-            # Export variables correctly using environment files
-            echo "VERSION=$VERSION" >> $GITHUB_ENV
-            echo "PACKAGE=$PACKAGE" >> $GITHUB_ENV
-          else
-            echo "Changed file does not exist: $FIRST_FILE"
+          # Check if version and package are set
+          if [ -z "${VERSION}" ] || [ -z "${PACKAGE}" ]; then
+            echo "No version or package found."
             exit 1
           fi
 
