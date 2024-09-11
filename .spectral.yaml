@@ -1,0 +1,18 @@
+extends: [recommended]
+
+rules:
+  operation-2xx-response:
+    description: 'Ensure every operation has a 2xx response'
+    message: 'Operation must have at least one 2xx response'
+    given: '$.paths[*][*].responses'
+    then:
+      field: '2xx'
+      function: 'truthy'
+
+  no-unused-components:
+    description: 'Ensure that all components are used'
+    message: 'Component is not used in the paths or components'
+    given: '$.components'
+    then:
+      field: 'components'
+      function: 'truthy'
