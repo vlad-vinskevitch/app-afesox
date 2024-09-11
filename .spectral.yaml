@@ -22,13 +22,3 @@ rules:
       field: "example"
       function: "truthy"
       message: "The 'example' field should not be used in properties."
-
-  no-additional-properties:
-    description: "Ensure no additional properties are present."
-    given: "$..*"
-    then:
-      field: "*"
-      function: "not"
-      functionOptions:
-        field: "additionalProperties"
-      message: "Additional properties are not allowed."
