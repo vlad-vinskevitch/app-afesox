@@ -20,10 +20,13 @@ jobs:
       - name: Install Spectral CLI
         run: npm install -g @stoplight/spectral-cli
 
+      - name: Check Spectral version
+        run: spectral --version
+
       - name: Validate OpenAPI files
         run: |
           CHANGED_OPENAPI_FILES=$(find . -type f -name 'openapi-rest.yml')
           for file in $CHANGED_OPENAPI_FILES; do
             echo "Validating $file with Spectral..."
-            spectral lint "$file" --ruleset .spectral.yaml
+            spectral lint "$file" --ruleset .spectral.yaml || exit 1
           done
