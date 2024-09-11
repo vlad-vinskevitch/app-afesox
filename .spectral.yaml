@@ -14,10 +14,6 @@ rules:
       field: "schema.example"
       function: "truthy"
       message: "The 'example' field should not be used in parameters."
-    resolve:
-      path: "$..parameters.schema"
-    # Allow 'additionalProperties' for validation
-    additionalProperties: false
 
   no-example-in-properties:
     description: "Ensure no 'example' field is present in properties."
@@ -26,4 +22,3 @@ rules:
       field: "example"
       function: "truthy"
       message: "The 'example' field should not be used in properties."
-    additionalProperties: false
