@@ -108,9 +108,13 @@ jobs:
           ARTIFACT_ID="app-afesox-${NAME}-stable"
 
           echo "Deploying to package: ${ARTIFACT_ID} with version: ${VERSION}"
+
+          # Update the POM file with the new artifactId and version
+          mvn versions:set -DnewVersion=${VERSION}
+
           mvn clean package -Dproject.version=${VERSION}
           
-          if mvn deploy -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
+          if mvn deploy -Dproject.version=${VERSION} -DartifactId=${ARTIFACT_ID}; then
             echo "Deployment successful."
           else
             echo "Deployment failed. Version ${VERSION} might already be deployed."
