@@ -78,6 +78,7 @@ jobs:
           
           # Process each changed YAML file
           for FILE in $CHANGED_FILES; do
+            FILE="./$FILE"  # Ensure the path is relative from the root
             if [[ "$FILE" == *"metadata.yml" ]]; then
               # Extract version and package from metadata.yml
               VERSION=$(yq e '.api.version' "$FILE")
