@@ -59,19 +59,26 @@ jobs:
       - name: Detect changed YAML files
         id: detect_yaml
         run: |
+          # Detect changed YAML files, but exclude any in the `.github` directory
           CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep -E '\.yml$' | grep -v '^\.github/')
+          
           if [ -z "$CHANGED_FILES" ]; then
-            echo "No YAML files changed."
+            echo "No YAML files changed outside of .github directory."
             exit 1
           fi
+          
           echo "Changed YAML files:"
           echo "$CHANGED_FILES"
-          echo "::set-output name=files::$CHANGED_FILES"
+          
+          # Output to a temporary file
+          echo "$CHANGED_FILES" > changed_files.txt
 
       - name: Extract Version from changed YAML file
         id: extract_version
         run: |
-          CHANGED_FILES=${{ steps.detect_yaml.outputs.files }}
+          # Read the changed files list from the temporary file
+          CHANGED_FILES=$(cat changed_files.txt)
+          
           if [ -z "$CHANGED_FILES" ]; then
             echo "No YAML files found."
             exit 1
@@ -84,6 +91,7 @@ jobs:
           if [ -f "$FIRST_FILE" ]; then
             VERSION=$(yq e '.info.version' "$FIRST_FILE")
             PACKAGE=$(basename "$FIRST_FILE" | sed 's/.yml//')
+          
             echo "VERSION=$VERSION" >> $GITHUB_ENV
             echo "PACKAGE=$PACKAGE" >> $GITHUB_ENV
           else
@@ -100,6 +108,7 @@ jobs:
         run: |
           echo "Deploying to package: ${{ env.PACKAGE }} with version: ${{ env.VERSION }}"
           mvn clean package -Dproject.version=${{ env.VERSION }}
+          
           if mvn deploy -Dproject.version=${{ env.VERSION }} -Dpackage=${{ env.PACKAGE }}; then
             echo "Deployment successful."
           else
