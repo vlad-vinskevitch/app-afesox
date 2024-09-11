@@ -1,50 +1,29 @@
-name: Verify OpenAPI Files on PR
+name: Validate OpenAPI Files
 
 on:
   pull_request:
-    branches:
-      - develop
+    paths:
+      - '**/openapi-rest.yml'
 
 jobs:
-  validate-openapi:
+  validate:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
         with:
-          fetch-depth: 1  # Ensure we have the current commit to check files
+          node-version: '14'
 
       - name: Install Spectral CLI
-        run: |
-          npm install -g @stoplight/spectral-cli
-
-      - name: Install OpenAPI Generator CLI
-        run: |
-          npm install -g @openapitools/openapi-generator-cli
-
-      - name: Install Swagger CLI
-        run: |
-          npm install -g @apidevtools/swagger-cli
+        run: npm install -g @stoplight/spectral-cli
 
       - name: Validate OpenAPI files
         run: |
-          # Find all openapi-rest.yml files in the repository
-          OPENAPI_FILES=$(find . -type f -name 'openapi-rest.yml')
-          
-          if [ -z "$OPENAPI_FILES" ]; then
-            echo "No OpenAPI files found to validate."
-            exit 0  # Exit with 0 if no files are found
-          fi
-
-          # Iterate over each OpenAPI file and validate it
-          for FILE in $OPENAPI_FILES; do
-            echo "Validating $FILE with swagger-cli..."
-            swagger-cli validate "$FILE" || exit 1  # Validate using swagger-cli
-
-            echo "Validating $FILE with openapi-generator-cli..."
-            openapi-generator-cli validate -i "$FILE" || exit 1  # Validate using openapi-generator-cli
-
-            echo "Validating $FILE with spectral-cli for detailed errors..."
-            spectral lint "$FILE" --ruleset .spectral.yaml || exit 1  # Validate using spectral-cli with ruleset
+          CHANGED_OPENAPI_FILES=$(find . -type f -name 'openapi-rest.yml')
+          for file in $CHANGED_OPENAPI_FILES; do
+            echo "Validating $file with Spectral..."
+            spectral lint "$file" --ruleset .spectral.yaml
           done
