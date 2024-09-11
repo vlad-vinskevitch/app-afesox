@@ -67,17 +67,26 @@ jobs:
           
           # Output to a temporary file for further processing
           echo "$CHANGED_FILES" > changed_files.txt
+          cat changed_files.txt  # For debugging
 
       - name: Extract Version from metadata.yml
         id: extract_version
         run: |
           CHANGED_FILES=$(cat changed_files.txt)
           
+          # Debug: Print changed files
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+
+          # Process each changed YAML file
           for FILE in $CHANGED_FILES; do
             if [[ "$FILE" == *"metadata.yml" ]]; then
+              echo "Processing file: $FILE"
               if [ -f "$FILE" ]; then
                 VERSION=$(yq e '.metadata.version' "$FILE")
                 NAME=$(yq e '.metadata.name' "$FILE")
+                echo "Extracted version: $VERSION"
+                echo "Extracted name: $NAME"
                 echo "VERSION=$VERSION" >> $GITHUB_ENV
                 echo "NAME=$NAME" >> $GITHUB_ENV
                 break
