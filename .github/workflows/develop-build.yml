@@ -13,7 +13,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
         with:
-          fetch-depth: 2  # Ensure previous commit is available for comparison
+          fetch-depth: 2
 
       - name: Set up JDK 17
         uses: actions/setup-java@v3
@@ -57,7 +57,6 @@ jobs:
       - name: Detect changed YAML files
         id: detect_yaml
         run: |
-          # Detect changed YAML files, excluding any in the `.github` directory
           CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep -E '\.yml$' | grep -v '^\.github/')
           
           if [ -z "$CHANGED_FILES" ]; then
@@ -68,47 +67,44 @@ jobs:
           echo "Changed YAML files:"
           echo "$CHANGED_FILES"
 
-          # Set the changed files list as output
           echo "::set-output name=files::$CHANGED_FILES"
+
+      - name: Output metadata.yml content
+        run: |
+          cat ./apis/athssox/api-first/metadata.yml
 
       - name: Extract Version and Package
         id: extract_info
         run: |
           CHANGED_FILES=${{ steps.detect_yaml.outputs.files }}
-          echo "Processing changed files:"
+          echo "Changed YAML files:"
           echo "$CHANGED_FILES"
           
-          # Initialize variables
           VERSION=""
           PACKAGE_NAME=""
 
-          # Process each changed YAML file
           for FILE in $CHANGED_FILES; do
-            FILE="./$FILE"  # Ensure the path is relative from the root
+            FILE="./$FILE"
             echo "Processing file: $FILE"
           
             if [[ "$FILE" == *"metadata.yml" ]]; then
-              # Extract version and package from metadata.yml
               VERSION=$(yq e '.api.version' "$FILE")
               PACKAGE_NAME=$(yq e '.api.metadata.name' "$FILE")
-              echo "Extracted version: $VERSION"
-              echo "Extracted name: $PACKAGE_NAME"
+              echo "Extracted version from $FILE: $VERSION"
+              echo "Extracted name from $FILE: $PACKAGE_NAME"
             fi
           done
 
-          # Check if version and package are set
           if [ -z "${VERSION}" ] || [ -z "${PACKAGE_NAME}" ]; then
             echo "No version or package found."
             exit 1
           fi
 
-          # Export variables
           echo "VERSION=${VERSION}" >> $GITHUB_ENV
           echo "PACKAGE=${PACKAGE_NAME}-stable" >> $GITHUB_ENV
 
       - name: Build and Deploy with Maven
         run: |
-          # Check if the variables are properly set
           if [ -z "${VERSION}" ] || [ -z "${PACKAGE}" ]; then
             echo "VERSION or PACKAGE is not set correctly."
             exit 1
