@@ -6,3 +6,17 @@ rules:
     then:
       field: "url"
       function: "truthy"
+  no-examples:
+    description: "Ensure no 'example' fields are present."
+    given: "$..examples"
+    then:
+      field: "examples"
+      function: "truthy"
+      message: "The 'example' field should not be used."
+  no-invalid-examples:
+    description: "Ensure that all 'example' fields are valid."
+    given: "$..example"
+    then:
+      field: "example"
+      function: "truthy"
+      message: "The 'example' field must be a valid example."
