@@ -104,6 +104,11 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "ARTIFACT_ID=$ARTIFACT_ID" >> $GITHUB_ENV
 
+      - name: Debug - Print Environment Variables
+        run: |
+          echo "VERSION: ${VERSION}"
+          echo "ARTIFACT_ID: ${ARTIFACT_ID}"
+
       - name: Build and Deploy with Maven
         run: |
           # Check if the variables are properly set
@@ -113,9 +118,9 @@ jobs:
           fi
 
           echo "Deploying to artifactId: ${ARTIFACT_ID} with version: ${VERSION}"
-          mvn clean package -Dproject.version=${VERSION} -DartifactId=${ARTIFACT_ID}
+          mvn clean package -Dproject.version="${VERSION}" -DartifactId="${ARTIFACT_ID}"
           
-          if mvn deploy -Dproject.version=${VERSION} -DartifactId=${ARTIFACT_ID}; then
+          if mvn deploy -Dproject.version="${VERSION}" -DartifactId="${ARTIFACT_ID}"; then
             echo "Deployment successful."
           else
             echo "Deployment failed. Version ${VERSION} might already be deployed."
