@@ -13,34 +13,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
         with:
-          fetch-depth: 2  # Ensure previous commit is available for comparison
+          fetch-depth: 1  # Only fetch the current commit
 
       - name: Install swagger-cli
         run: |
           npm install -g @apidevtools/swagger-cli
 
-      - name: Detect changed OpenAPI files
-        id: detect_openapi
-        run: |
-          # Detect changed openapi.yml files in the pull request
-          CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep 'openapi.yml')
-
-          if [ -z "$CHANGED_FILES" ]; then
-            echo "No OpenAPI files changed."
-            exit 0  # Exit with 0 if no files are changed to avoid failing the job
-          fi
-
-          echo "Changed OpenAPI files:"
-          echo "$CHANGED_FILES"
-
-          # Export changed files for further steps
-          echo "CHANGED_OPENAPI_FILES=$CHANGED_FILES" >> $GITHUB_ENV
-
       - name: Validate OpenAPI files
-        if: env.CHANGED_OPENAPI_FILES != ''
         run: |
-          # Iterate over each changed OpenAPI file and validate them
-          for FILE in $CHANGED_OPENAPI_FILES; do
-            echo "Validating $FILE..."
-            swagger-cli validate "$FILE"
-          done
+          # Find all openapi.yml files in the repository
+          OPENAPI_FILES=$(find . -type f -name 'openapi.yml')
+
+          if [ -z "$OPENAPI_FILES" ]; then
+            echo "No OpenAPI files found to validate."
+            exit 0  # Exit with 0 to avoid
