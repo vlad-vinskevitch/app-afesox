@@ -1,9 +1,9 @@
 name: Maven CI for Develop
 
 on:
-  push:
-    branches:
-      - develop
+  pull_request:
+    paths:
+      - '**/*.yml'  # Trigger on any YAML file changes
 
 jobs:
   build:
@@ -59,64 +59,56 @@ jobs:
         run: |
           # Detect changed YAML files, excluding any in the `.github` directory
           CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep -E '\.yml$' | grep -v '^\.github/')
-          
-          if [ -z "$CHANGED_FILES" ]; then
-            echo "No YAML files changed outside of .github directory."
-            exit 1
-          fi
-          
-          # Output to a temporary file for further processing
           echo "$CHANGED_FILES" > changed_files.txt
-          cat changed_files.txt  # For debugging
 
-      - name: Extract Version from metadata.yml
-        id: extract_version
+      - name: Check if openapi-rest.yml changed
+        id: check_openapi
         run: |
           CHANGED_FILES=$(cat changed_files.txt)
-          
-          # Debug: Print changed files
-          echo "Changed files:"
-          echo "$CHANGED_FILES"
+          if echo "$CHANGED_FILES" | grep -q 'openapi-rest.yml'; then
+            echo "openapi-rest.yml has changed."
+            echo "OPENAPI_CHANGED=true" >> $GITHUB_ENV
+          else
+            echo "openapi-rest.yml has not changed."
+            echo "OPENAPI_CHANGED=false" >> $GITHUB_ENV
+          fi
 
-          # Process each changed YAML file
-          for FILE in $CHANGED_FILES; do
-            if [[ "$FILE" == *"metadata.yml" ]]; then
-              echo "Processing file: $FILE"
-              if [ -f "$FILE" ]; then
-                VERSION=$(yq e '.metadata.version' "$FILE")
-                NAME=$(yq e '.metadata.name' "$FILE")
-                echo "Extracted version: $VERSION"
-                echo "Extracted name: $NAME"
-                echo "VERSION=$VERSION" >> $GITHUB_ENV
-                echo "NAME=$NAME" >> $GITHUB_ENV
-                break
-              else
-                echo "Changed file does not exist: $FILE"
-                exit 1
-              fi
+      - name: Extract metadata and version
+        id: extract_metadata
+        run: |
+          if [ "${{ env.OPENAPI_CHANGED }}" = "true" ]; then
+            # Extract version and name from metadata.yml
+            METADATA_FILE=$(echo "$CHANGED_FILES" | grep 'metadata.yml')
+            if [ -f "$METADATA_FILE" ]; then
+              VERSION=$(yq e '.metadata.version' "$METADATA_FILE")
+              NAME=$(yq e '.metadata.name' "$METADATA_FILE")
+              echo "Extracted version: $VERSION"
+              echo "Extracted name: $NAME"
+              echo "VERSION=$VERSION" >> $GITHUB_ENV
+              echo "NAME=$NAME" >> $GITHUB_ENV
+
+              # Create artifactId based on metadata
+              ARTIFACT_ID="app-afesox-${NAME}-stable"
+              echo "ARTIFACT_ID=$ARTIFACT_ID" >> $GITHUB_ENV
+            else
+              echo "Metadata file does not exist."
+              exit 1
             fi
-          done
-
-          if [ -z "${{ env.VERSION }}" ] || [ -z "${{ env.NAME }}" ]; then
-            echo "No version or name found in the changed metadata files."
-            exit 1
+          else
+            echo "Skipping metadata extraction as openapi-rest.yml did not change."
           fi
 
       - name: Build and Deploy with Maven
         run: |
-          # Check if the variables are properly set
-          if [ -z "${VERSION}" ] || [ -z "${NAME}" ]; then
+          if [ -z "${{ env.VERSION }}" ] || [ -z "${{ env.NAME }}" ]; then
             echo "VERSION or NAME is not set correctly."
             exit 1
           fi
 
-          # Create the artifactId with the name from metadata
-          ARTIFACT_ID="app-afesox-${NAME}-stable"
-
-          echo "Deploying to package: ${ARTIFACT_ID} with version: ${VERSION}"
-          mvn clean package -Dproject.version=${VERSION} -Dproject.artifactId=${ARTIFACT_ID}
+          echo "Deploying to artifactId: ${ARTIFACT_ID} with version: ${VERSION}"
+          mvn clean package -Dproject.version=${VERSION}
           
-          if mvn deploy -Dproject.version=${VERSION} -Dproject.artifactId=${ARTIFACT_ID}; then
+          if mvn deploy -Dproject.version=${VERSION} -DartifactId=${ARTIFACT_ID}; then
             echo "Deployment successful."
           else
             echo "Deployment failed. Version ${VERSION} might already be deployed."
