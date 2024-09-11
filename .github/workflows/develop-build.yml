@@ -34,8 +34,6 @@ jobs:
           if [ -z "${{ secrets.APP_AFESOX }}" ]; then
             echo "ERROR: Secret APP_AFESOX is not set or not accessible."
             exit 1
-          else
-            echo "GitHub token is set."
           fi
 
       - name: Setup Maven settings
@@ -59,7 +57,7 @@ jobs:
       - name: Detect changed YAML files
         id: detect_yaml
         run: |
-          # Detect changed YAML files, but exclude any in the `.github` directory
+          # Detect changed YAML files, excluding any in the `.github` directory
           CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep -E '\.yml$' | grep -v '^\.github/')
           
           if [ -z "$CHANGED_FILES" ]; then
@@ -67,10 +65,7 @@ jobs:
             exit 1
           fi
           
-          echo "Changed YAML files:"
-          echo "$CHANGED_FILES"
-          
-          # Output to a temporary file
+          # Output to a temporary file for further processing
           echo "$CHANGED_FILES" > changed_files.txt
 
       - name: Extract Version from changed YAML file
@@ -79,26 +74,14 @@ jobs:
           # Read the changed files list from the temporary file
           CHANGED_FILES=$(cat changed_files.txt)
           
-          if [ -z "$CHANGED_FILES" ]; then
-            echo "No YAML files found."
-            exit 1
-          fi
-
           # Process the first changed YAML file
           FIRST_FILE=$(echo "$CHANGED_FILES" | head -n 1)
-          echo "Processing file: $FIRST_FILE"
           
-          # Check if the file exists and print its contents for debugging
+          # Check if the file exists
           if [ -f "$FIRST_FILE" ]; then
-            echo "File $FIRST_FILE exists."
-            cat "$FIRST_FILE"  # Print file content for debugging
-          
-            # Extract version using yq
+            # Extract version and package name using yq
             VERSION=$(yq e '.info.version' "$FIRST_FILE")
             PACKAGE=$(basename "$FIRST_FILE" | sed 's/.yml//')
-          
-            echo "Extracted version: $VERSION"
-            echo "Extracted package: $PACKAGE"
 
             # Export variables correctly using environment files
             echo "VERSION=$VERSION" >> $GITHUB_ENV
