@@ -96,7 +96,7 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "NAME=$NAME" >> $GITHUB_ENV
 
-      - name: Build and Deploy with Maven
+      - name: Update POM.xml with new artifactId and version
         run: |
           # Check if the variables are properly set
           if [ -z "${VERSION}" ] || [ -z "${NAME}" ]; then
@@ -104,14 +104,18 @@ jobs:
             exit 1
           fi
 
-          # Construct artifact ID
+          # Construct artifactId
           ARTIFACT_ID="app-afesox-${NAME}-stable"
 
-          echo "Deploying to package: ${ARTIFACT_ID} with version: ${VERSION}"
+          echo "Updating POM.xml with artifactId: ${ARTIFACT_ID} and version: ${VERSION}"
 
           # Update the POM file with the new artifactId and version
-          mvn versions:set -DnewVersion=${VERSION}
+          sed -i "s/<artifactId>.*<\/artifactId>/<artifactId>${ARTIFACT_ID}<\/artifactId>/" pom.xml
+          sed -i "s/<version>.*<\/version>/<version>${VERSION}<\/version>/" pom.xml
 
+      - name: Build and Deploy with Maven
+        run: |
+          echo "Deploying to package: ${ARTIFACT_ID} with version: ${VERSION}"
           mvn clean package -Dproject.version=${VERSION}
           
           if mvn deploy -Dproject.version=${VERSION} -DartifactId=${ARTIFACT_ID}; then
