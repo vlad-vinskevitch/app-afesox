@@ -68,59 +68,46 @@ jobs:
           # Output to a temporary file for further processing
           echo "$CHANGED_FILES" > changed_files.txt
 
-      - name: Extract Version and Name from metadata.yml
-        id: extract_metadata
+      - name: Extract Version from metadata.yml
+        id: extract_version
         run: |
-          # Read the changed files list from the temporary file
           CHANGED_FILES=$(cat changed_files.txt)
           
-          # Find metadata.yml file that is in the same directory as the first changed OpenAPI file
-          FIRST_FILE=$(echo "$CHANGED_FILES" | grep 'openapi-rest.yml' | head -n 1)
-          if [ -z "$FIRST_FILE" ]; then
-            echo "No OpenAPI YAML file found."
+          for FILE in $CHANGED_FILES; do
+            if [[ "$FILE" == *"metadata.yml" ]]; then
+              if [ -f "$FILE" ]; then
+                VERSION=$(yq e '.metadata.version' "$FILE")
+                NAME=$(yq e '.metadata.name' "$FILE")
+                echo "VERSION=$VERSION" >> $GITHUB_ENV
+                echo "NAME=$NAME" >> $GITHUB_ENV
+                break
+              else
+                echo "Changed file does not exist: $FILE"
+                exit 1
+              fi
+            fi
+          done
+
+          if [ -z "${{ env.VERSION }}" ] || [ -z "${{ env.NAME }}" ]; then
+            echo "No version or name found in the changed metadata files."
             exit 1
           fi
-
-          # Construct metadata.yml path from the directory of the OpenAPI file
-          METADATA_FILE=$(dirname "$FIRST_FILE")/metadata.yml
-          if [ ! -f "$METADATA_FILE" ]; then
-            echo "metadata.yml not found: $METADATA_FILE"
-            exit 1
-          fi
-
-          # Extract version and name from metadata.yml
-          VERSION=$(yq e '.metadata.version' "$METADATA_FILE")
-          NAME=$(yq e '.name' "$METADATA_FILE")
-
-          if [ -z "$VERSION" ] || [ -z "$NAME" ]; then
-            echo "VERSION or NAME not found in metadata.yml."
-            exit 1
-          fi
-
-          # Construct the new artifactId
-          ARTIFACT_ID="app-afesox-${NAME}-stable"
-
-          # Export variables correctly using environment files
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "ARTIFACT_ID=$ARTIFACT_ID" >> $GITHUB_ENV
-
-      - name: Debug - Print Environment Variables
-        run: |
-          echo "VERSION: ${VERSION}"
-          echo "ARTIFACT_ID: ${ARTIFACT_ID}"
 
       - name: Build and Deploy with Maven
         run: |
           # Check if the variables are properly set
-          if [ -z "${VERSION}" ] || [ -z "${ARTIFACT_ID}" ]; then
-            echo "VERSION or ARTIFACT_ID is not set correctly."
+          if [ -z "${VERSION}" ] || [ -z "${NAME}" ]; then
+            echo "VERSION or NAME is not set correctly."
             exit 1
           fi
 
-          echo "Deploying to artifactId: ${ARTIFACT_ID} with version: ${VERSION}"
-          mvn clean package -Dproject.version="${VERSION}" -DartifactId="${ARTIFACT_ID}"
+          # Create the artifactId with the name from metadata
+          ARTIFACT_ID="app-afesox-${NAME}-stable"
+
+          echo "Deploying to package: ${ARTIFACT_ID} with version: ${VERSION}"
+          mvn clean package -Dproject.version=${VERSION} -Dproject.artifactId=${ARTIFACT_ID}
           
-          if mvn deploy -Dproject.version="${VERSION}" -DartifactId="${ARTIFACT_ID}"; then
+          if mvn deploy -Dproject.version=${VERSION} -Dproject.artifactId=${ARTIFACT_ID}; then
             echo "Deployment successful."
           else
             echo "Deployment failed. Version ${VERSION} might already be deployed."
