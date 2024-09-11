@@ -68,28 +68,35 @@ jobs:
           # Output to a temporary file for further processing
           echo "$CHANGED_FILES" > changed_files.txt
 
-      - name: Extract Version and Name from metadata
+      - name: Extract Version and Name from metadata.yml
         id: extract_metadata
         run: |
           # Read the changed files list from the temporary file
           CHANGED_FILES=$(cat changed_files.txt)
           
-          # Process metadata file if it was changed
-          METADATA_FILE=$(echo "$CHANGED_FILES" | grep 'metadata.yml')
-          
-          if [ -f "$METADATA_FILE" ]; then
-            VERSION=$(yq e '.api.version' "$METADATA_FILE")
-            NAME=$(yq e '.api.name' "$METADATA_FILE")
+          # Initialize variables
+          VERSION=""
+          NAME=""
 
-            # Export variables correctly using environment files
-            echo "VERSION=$VERSION" >> $GITHUB_ENV
-            echo "NAME=$NAME" >> $GITHUB_ENV
-          else
-            echo "No metadata file found in changed files."
+          for FILE in $CHANGED_FILES; do
+            if [[ $FILE == *"metadata.yml"* ]]; then
+              # Extract version and name from metadata.yml
+              VERSION=$(yq e '.api.version' $FILE)
+              NAME=$(yq e '.api.name' $FILE)
+              break
+            fi
+          done
+
+          # Export variables correctly using environment files
+          if [ -z "$VERSION" ] || [ -z "$NAME" ]; then
+            echo "No version or name found in the changed metadata files."
             exit 1
           fi
 
-      - name: Update POM.xml with new artifactId and version
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "NAME=$NAME" >> $GITHUB_ENV
+
+      - name: Build and Deploy with Maven
         run: |
           # Check if the variables are properly set
           if [ -z "${VERSION}" ] || [ -z "${NAME}" ]; then
@@ -97,22 +104,8 @@ jobs:
             exit 1
           fi
 
-          # Construct artifactId
+          # Construct artifact ID
           ARTIFACT_ID="app-afesox-${NAME}-stable"
-
-          echo "Updating POM.xml with artifactId: ${ARTIFACT_ID} and version: ${VERSION}"
-
-          # Update the POM file with the new artifactId and version
-          sed -i "s/<artifactId>app-afesox<\/artifactId>/<artifactId>${ARTIFACT_ID}<\/artifactId>/" pom.xml
-          sed -i "s/<version>${env.VERSION}<\/version>/<version>${VERSION}<\/version>/" pom.xml
-
-      - name: Build and Deploy with Maven
-        run: |
-          # Check if the variables are properly set
-          if [ -z "${VERSION}" ] || [ -z "${ARTIFACT_ID}" ]; then
-            echo "VERSION or ARTIFACT_ID is not set correctly."
-            exit 1
-          fi
 
           echo "Deploying to package: ${ARTIFACT_ID} with version: ${VERSION}"
           mvn clean package -Dproject.version=${VERSION}
