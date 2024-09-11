@@ -15,7 +15,11 @@ jobs:
         with:
           fetch-depth: 1  # Only fetch the current commit
 
-      - name: Install swagger-cli
+      - name: Install OpenAPI Generator CLI
+        run: |
+          npm install -g @openapitools/openapi-generator-cli
+
+      - name: Install Swagger CLI
         run: |
           npm install -g @apidevtools/swagger-cli
 
@@ -31,6 +35,9 @@ jobs:
 
           # Iterate over each OpenAPI file and validate it
           for FILE in $OPENAPI_FILES; do
-            echo "Validating $FILE..."
-            swagger-cli validate "$FILE" || exit 1
+            echo "Validating $FILE with swagger-cli..."
+            swagger-cli validate "$FILE" || exit 1  # Validate using swagger-cli
+
+            echo "Validating $FILE with openapi-generator-cli..."
+            openapi-generator-cli validate -i "$FILE" || exit 1  # Validate using openapi-generator-cli
           done
