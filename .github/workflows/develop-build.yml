@@ -91,15 +91,25 @@ jobs:
               echo "::set-output name=version::$VERSION"
               echo "::set-output name=name::$NAME"
               echo "::set-output name=executions::$EXECUTIONS"
+          
+              # Debug outputs
+              echo "Debug: Extracted Version: $VERSION"
+              echo "Debug: Extracted Name: $NAME"
+              echo "Debug: Extracted Executions: $EXECUTIONS"
             fi
           done
 
-      - name: Run Maven Deployments Based on Executions
+      - name: Print Execution Types and Run Maven Deployments
         run: |
           VERSION=${{ steps.extract_metadata.outputs.version }}
           NAME=${{ steps.extract_metadata.outputs.name }}
           EXECUTIONS="${{ steps.extract_metadata.outputs.executions }}"
 
+          # Debug outputs before running Maven
+          echo "Debug: VERSION = $VERSION"
+          echo "Debug: NAME = $NAME"
+          echo "Debug: EXECUTIONS = $EXECUTIONS"
+          
           if [ -z "$EXECUTIONS" ]; then
             echo "No execution types found in metadata. Skipping."
             exit 0
@@ -109,13 +119,11 @@ jobs:
           IFS=$'\n' read -r -d '' -a EXECUTIONS_ARRAY <<< "$EXECUTIONS"
 
           # Print debug information
-          echo "Extracted Version: $VERSION"
-          echo "Extracted Name: $NAME"
-          echo "Extracted Executions: ${EXECUTIONS_ARRAY[@]}"
+          echo "Debug: Extracted Executions Array: ${EXECUTIONS_ARRAY[@]}"
 
           # Loop through the executions and trigger corresponding Maven executions
           for EXECUTION_TYPE in "${EXECUTIONS_ARRAY[@]}"; do
-            echo "Processing execution type: $EXECUTION_TYPE"
+            echo "Debug: Processing execution type: $EXECUTION_TYPE"
           
             # Print the Maven command for debugging
             echo "Running Maven with the following command:"
