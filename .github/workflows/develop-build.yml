@@ -97,16 +97,17 @@ jobs:
           ARTIFACT_ID="app-afesox-${NAME}-stable"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "ARTIFACT_ID=$ARTIFACT_ID" >> $GITHUB_ENV
+          echo "NAME=$NAME" >> $GITHUB_ENV  # Add NAME to environment
 
       - name: Build and Deploy with Maven
         run: |
           # Check if the variables are properly set
-          if [ -z "${VERSION}" ] || [ -z "${ARTIFACT_ID}" ]; then
-            echo "VERSION or ARTIFACT_ID is not set correctly."
+          if [ -z "${VERSION}" ] || [ -z "${ARTIFACT_ID}" ] || [ -z "${NAME}" ]; then
+            echo "VERSION, ARTIFACT_ID, or NAME is not set correctly."
             exit 1
           fi
 
-          echo "Deploying to package: ${ARTIFACT_ID} with version: ${VERSION}"
+          echo "Deploying to package: ${ARTIFACT_ID} with version: ${VERSION} and name: ${NAME}"
           mvn clean package -Dproject.version=${VERSION}
           
           if mvn deploy -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
