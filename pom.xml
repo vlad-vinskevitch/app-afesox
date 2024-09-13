@@ -7,7 +7,29 @@
     <version>${env.VERSION}</version>
     <packaging>jar</packaging>
 
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <spring.version>5.3.25</spring.version> <!-- or another version as needed -->
+    </properties>
+
     <dependencies>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+
         <!-- OpenAPI Generator Core -->
         <dependency>
             <groupId>io.swagger.core.v3</groupId>
@@ -45,6 +67,12 @@
             <artifactId>javax.servlet-api</artifactId>
             <version>4.0.1</version>
             <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>3.0.2</version>
         </dependency>
 
         <dependency>
@@ -90,8 +118,8 @@
                             <library>spring-http-interface</library>
                             <output>${project.build.directory}/generated-sources</output>
                             <configOptions>
-                                <apiPackage>com.app-afesox.${env.NAME}.api</apiPackage>
-                                <modelPackage>com.app-afesox.${env.NAME}.dto</modelPackage>
+                                <apiPackage>com.app-afesox.${env.NAME}.api-first.api</apiPackage>
+                                <modelPackage>com.app-afesox.${env.NAME}.api-first.dto</modelPackage>
                                 <delegatePattern>true</delegatePattern>
                                 <useTags>true</useTags>
                                 <modelNameSuffix>DTO</modelNameSuffix>
@@ -102,6 +130,34 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <version>6.0.1</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <phase>generate-sources</phase>
+                    </execution>
+                </executions>
+                <configuration>
+                    <inputSpec>${project.basedir}/apis/${env.NAME}/api-first/openapi-rest.yml</inputSpec>
+                    <generatorName>java</generatorName>
+                    <output>${project.build.directory}/generated-sources/openapi</output>
+                    <apiPackage>com.app-afesox.${env.NAME}.client.api</apiPackage>
+                    <modelPackage>com.app-afesox.${env.NAME}.client.model</modelPackage>
+                    <invokerPackage>com.app-afesox.${env.NAME}.client.invoker</invokerPackage>
+                    <configOptions>
+                        <useTags>true</useTags>
+                        <modelNameSuffix>DTO</modelNameSuffix>
+                        <dateLibrary>java8</dateLibrary>
+                        <library>resttemplate</library> <!-- Use Spring Boot library -->
+                    </configOptions>
+                </configuration>
             </plugin>
 
             <plugin>
