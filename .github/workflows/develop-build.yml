@@ -66,19 +66,21 @@ jobs:
           
           echo "$CHANGED_FILES" > changed_files.txt
 
-      - name: Extract Version, Name, Execution Type, and Deploy
+      - name: Extract Version, Name, and Process Executions
         run: |
           CHANGED_FILES=$(cat changed_files.txt)
           DEPLOYMENT_DONE=false
 
           for FILE in $CHANGED_FILES; do
             if [[ $FILE == *"metadata.yml"* ]]; then
+              echo "Processing $FILE..."
+
+              # Extract version and name
               VERSION=$(yq e '.api.version' $FILE)
               NAME=$(yq e '.api.name' $FILE)
-              EXECUTION_TYPE=$(yq e '.executions[0].type' $FILE)
-          
-              if [ -z "$VERSION" ] || [ -z "$NAME" ] || [ -z "$EXECUTION_TYPE" ]; then
-                echo "No version, name, or execution type found in $FILE. Skipping."
+
+              if [ -z "$VERSION" ] || [ -z "$NAME" ]; then
+                echo "No version or name found in $FILE. Skipping."
                 continue
               fi
 
@@ -87,29 +89,34 @@ jobs:
               export ARTIFACT_ID
               export NAME
 
-              echo "Deploying ${NAME} with artifact ID ${ARTIFACT_ID} and version ${VERSION}..."
+              # Loop through each execution type
+              EXECUTION_TYPES=$(yq e '.executions[].type' $FILE)
+              for EXECUTION_TYPE in $EXECUTION_TYPES; do
+                echo "Processing execution type: ${EXECUTION_TYPE}"
 
-              # Execute the appropriate Maven execution based on the execution type
-              case $EXECUTION_TYPE in
-                client)
-                  mvn clean package -Dproject.version=${VERSION} -Pclient || exit 1
-                  ;;
-                api-first)
-                  mvn clean package -Dproject.version=${VERSION} -Papi-first || exit 1
-                  ;;
-                *)
-                  echo "Unknown execution type: ${EXECUTION_TYPE}. Skipping deployment."
+                case $EXECUTION_TYPE in
+                  client)
+                    echo "Running client execution..."
+                    mvn clean package -Dproject.version=${VERSION} -Pclient || exit 1
+                    ;;
+                  api-first)
+                    echo "Running API-first execution..."
+                    mvn clean package -Dproject.version=${VERSION} -Papi-first || exit 1
+                    ;;
+                  *)
+                    echo "Unknown execution type: ${EXECUTION_TYPE}. Skipping."
+                    continue
+                    ;;
+                esac
+
+                if mvn deploy -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
+                  echo "Deployment of ${ARTIFACT_ID} with version ${VERSION} successful."
+                  DEPLOYMENT_DONE=true
+                else
+                  echo "Deployment failed. Version ${VERSION} might already be deployed for ${ARTIFACT_ID}."
                   continue
-                  ;;
-              esac
-
-              if mvn deploy -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
-                echo "Deployment of ${ARTIFACT_ID} with version ${VERSION} successful."
-                DEPLOYMENT_DONE=true
-              else
-                echo "Deployment failed. Version ${VERSION} might already be deployed for ${ARTIFACT_ID}."
-                continue
-              fi
+                fi
+              done
             fi
           done
 
