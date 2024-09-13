@@ -104,8 +104,20 @@ jobs:
 
               # Loop through all the execution types
               for EXECUTION_TYPE in $EXECUTIONS; do
-                # Dynamically determine which execution type should be deployed based on changed files
-                if [[ "$CHANGED_FILES" == *"${EXECUTION_TYPE}"* ]]; then
+                # Check if the execution type has any corresponding changes in its directory
+                EXECUTION_DIR="apis/${NAME}/${EXECUTION_TYPE}"
+                RELEVANT_CHANGE=false
+
+                # Loop through changed files and see if any are in the execution directory
+                for CHANGED_FILE in $CHANGED_FILES; do
+                  if [[ $CHANGED_FILE == "${EXECUTION_DIR}/"* ]]; then
+                    RELEVANT_CHANGE=true
+                    break
+                  fi
+                done
+
+                # Deploy only if relevant changes were found
+                if [ "$RELEVANT_CHANGE" = true ]; then
                   echo "Deploying ${NAME} for ${EXECUTION_TYPE} with artifact ID ${ARTIFACT_ID}, and version ${VERSION}..."
 
                   # Execute the corresponding deployment
