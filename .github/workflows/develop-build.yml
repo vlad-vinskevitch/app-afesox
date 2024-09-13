@@ -57,7 +57,6 @@ jobs:
       - name: Detect changed YAML files
         id: detect_yaml
         run: |
-          # Detect changed YAML files, excluding any in the `.github` directory
           CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep -E '\.yml$' | grep -v '^\.github/')
           
           if [ -z "$CHANGED_FILES" ]; then
@@ -65,65 +64,56 @@ jobs:
             exit 0  # Exit gracefully if no relevant changes are detected
           fi
           
-          # Output to a temporary file for further processing
           echo "$CHANGED_FILES" > changed_files.txt
 
-      - name: Extract Version, Name, and Deploy for Each Changed File
+      - name: Extract Version, Name, Execution Type, and Deploy
         run: |
-          # Read the changed files list from the temporary file
           CHANGED_FILES=$(cat changed_files.txt)
-
-          # Initialize a flag to detect if any deployment was done
           DEPLOYMENT_DONE=false
 
-          # Loop through each changed file
           for FILE in $CHANGED_FILES; do
             if [[ $FILE == *"metadata.yml"* ]]; then
-              # Extract version, name, and execution types from metadata.yml
               VERSION=$(yq e '.api.version' $FILE)
               NAME=$(yq e '.api.name' $FILE)
-              EXECUTIONS=$(yq e '.api.executions[].type' $FILE)  # Extract execution types
-
-              # Skip if any required values are not found
-              if [ -z "$VERSION" ] || [ -z "$NAME" ] || [ -z "$EXECUTIONS" ]; then
-                echo "No version, name, or execution types found in $FILE. Skipping."
+              EXECUTION_TYPE=$(yq e '.executions[0].type' $FILE)
+          
+              if [ -z "$VERSION" ] || [ -z "$NAME" ] || [ -z "$EXECUTION_TYPE" ]; then
+                echo "No version, name, or execution type found in $FILE. Skipping."
                 continue
               fi
 
-              # Loop through each execution type
-              for EXECUTION_TYPE in $EXECUTIONS; do
-                if [ "$EXECUTION_TYPE" == "client" ]; then
-                  ARTIFACT_ID="app-afesox-${NAME}-client-stable"
-                  echo "Deploying client artifact ${ARTIFACT_ID} with version ${VERSION}..."
-                  mvn clean package -Dproject.version=${VERSION} || exit 1
-                  if mvn deploy -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
-                    echo "Client deployment of ${ARTIFACT_ID} with version ${VERSION} successful."
-                    DEPLOYMENT_DONE=true
-                  else
-                    echo "Client deployment failed. Version ${VERSION} might already be deployed for ${ARTIFACT_ID}."
-                  fi
-                elif [ "$EXECUTION_TYPE" == "api-first" ]; then
-                  ARTIFACT_ID="app-afesox-${NAME}-api-first-stable"
-                  echo "Deploying API First artifact ${ARTIFACT_ID} with version ${VERSION}..."
-                  mvn clean package -Dproject.version=${VERSION} || exit 1
-                  if mvn deploy -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
-                    echo "API First deployment of ${ARTIFACT_ID} with version ${VERSION} successful."
-                    DEPLOYMENT_DONE=true
-                  else
-                    echo "API First deployment failed. Version ${VERSION} might already be deployed for ${ARTIFACT_ID}."
-                  fi
-                else
-                  echo "Unknown execution type $EXECUTION_TYPE. Skipping."
+              ARTIFACT_ID="app-afesox-${NAME}-stable"
+              export VERSION
+              export ARTIFACT_ID
+              export NAME
+
+              echo "Deploying ${NAME} with artifact ID ${ARTIFACT_ID} and version ${VERSION}..."
+
+              # Execute the appropriate Maven execution based on the execution type
+              case $EXECUTION_TYPE in
+                client)
+                  mvn clean package -Dproject.version=${VERSION} -Pclient || exit 1
+                  ;;
+                api-first)
+                  mvn clean package -Dproject.version=${VERSION} -Papi-first || exit 1
+                  ;;
+                *)
+                  echo "Unknown execution type: ${EXECUTION_TYPE}. Skipping deployment."
                   continue
-                fi
-              done
+                  ;;
+              esac
+
+              if mvn deploy -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
+                echo "Deployment of ${ARTIFACT_ID} with version ${VERSION} successful."
+                DEPLOYMENT_DONE=true
+              else
+                echo "Deployment failed. Version ${VERSION} might already be deployed for ${ARTIFACT_ID}."
+                continue
+              fi
             fi
           done
 
-          # Check if any deployment was done
           if [ "$DEPLOYMENT_DONE" = false ]; then
             echo "No deployments were performed. Please check the changed files."
             exit 1
           fi
-      
-      

@@ -1,5 +1,5 @@
 api:
-  version: 0.1.48
+  version: 0.1.49
   visibility: PUBLIC
   metadata:
     version: "1.0"
@@ -7,4 +7,3 @@ api:
   name: athssox
   executions:
     - type: client
-    - type: api-first
