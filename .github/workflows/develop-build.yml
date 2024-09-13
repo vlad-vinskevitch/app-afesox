@@ -99,14 +99,14 @@ jobs:
 
       - name: Build and Deploy API-First Execution
         run: |
-          ARTIFACT_ID="app-afesox-${NAME}-api-first-stable"
+          ARTIFACT_ID="app-afesox-${{ env.NAME }}-api-first-stable"
           echo "Building ${ARTIFACT_ID} with version ${VERSION}..."
-          mvn clean package -Dproject.version=${VERSION} -DartifactId=${ARTIFACT_ID}
-          mvn deploy -Dproject.version=${VERSION} -DartifactId=${ARTIFACT_ID}
+          mvn clean package -Dproject.artifactId=${ARTIFACT_ID} -Dproject.version=${VERSION}
+          mvn deploy -Dproject.artifactId=${ARTIFACT_ID} -Dproject.version=${VERSION}
 
       - name: Build and Deploy Client Execution
         run: |
-          ARTIFACT_ID="app-afesox-${NAME}-client-stable"
+          ARTIFACT_ID="app-afesox-${{ env.NAME }}-client-stable"
           echo "Building ${ARTIFACT_ID} with version ${VERSION}..."
-          mvn clean package -Dproject.version=${VERSION} -DartifactId=${ARTIFACT_ID}
-          mvn deploy -Dproject.version=${VERSION} -DartifactId=${ARTIFACT_ID}
+          mvn clean package -Dproject.artifactId=${ARTIFACT_ID} -Dproject.version=${VERSION}
+          mvn deploy -Dproject.artifactId=${ARTIFACT_ID} -Dproject.version=${VERSION}
