@@ -114,14 +114,14 @@ jobs:
             exit 0
           fi
 
-          # Split the executions into an array
           IFS=$'\n' read -r -d '' -a EXECUTIONS_ARRAY <<< "$EXECUTIONS"
 
-          # Loop through the executions and trigger corresponding Maven executions
           for EXECUTION_TYPE in "${EXECUTIONS_ARRAY[@]}"; do
             echo "Processing execution type: $EXECUTION_TYPE"
           
-            if mvn clean package -Dproject.version="$VERSION" -P"$EXECUTION_TYPE"; then
+            # Debug Maven commands
+            mvn -X clean package -Dproject.version="$VERSION" -P"$EXECUTION_TYPE"
+            if [ $? -eq 0 ]; then
               echo "Deployment for execution type $EXECUTION_TYPE successful."
             else
               echo "ERROR: Deployment for execution type $EXECUTION_TYPE failed."
