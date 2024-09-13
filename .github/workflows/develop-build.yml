@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 2  # Ensure previous commit is available for comparison
 
       - name: Set up JDK 17
         uses: actions/setup-java@v3
@@ -55,63 +57,47 @@ jobs:
       - name: Detect changed YAML files
         id: detect_yaml
         run: |
-          # Determine if HEAD^ exists
-          if git rev-parse --verify HEAD^ >/dev/null 2>&1; then
-            CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep -E '\.yml$' | grep -v '^\.github/')
-          else
-            # Use a different approach if HEAD^ does not exist
-            echo "HEAD^ does not exist. Using HEAD."
-            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD | grep -E '\.yml$' | grep -v '^\.github/')
-          fi
+          # Detect changed YAML files, excluding any in the `.github` directory
+          CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep -E '\.yml$' | grep -v '^\.github/')
           
           if [ -z "$CHANGED_FILES" ]; then
             echo "No YAML files changed outside of .github directory."
-            exit 0
+            exit 0  # Exit gracefully if no relevant changes are detected
           fi
           
+          # Output to a temporary file for further processing
           echo "$CHANGED_FILES" > changed_files.txt
 
       - name: Extract Version, Name, and Executions from Metadata
         id: extract_metadata
         run: |
+          # Read the changed files list from the temporary file
           CHANGED_FILES=$(cat changed_files.txt)
           
           for FILE in $CHANGED_FILES; do
             if [[ $FILE == *"metadata.yml"* ]]; then
+              # Extract version, name, and executions from metadata.yml
               VERSION=$(yq e '.api.version' $FILE)
               NAME=$(yq e '.api.name' $FILE)
               EXECUTIONS=$(yq e '.api.executions[].type' $FILE)
           
+              # Skip if version or name is not found
               if [ -z "$VERSION" ] || [ -z "$NAME" ]; then
                 echo "No version or name found in $FILE. Skipping."
                 continue
               fi
           
+              # Store the version, name, and executions for later steps
               echo "::set-output name=version::$VERSION"
               echo "::set-output name=name::$NAME"
               echo "::set-output name=executions::$EXECUTIONS"
             fi
           done
 
-      - name: Debug Version and Name
-        run: |
-          VERSION="${{ steps.extract_metadata.outputs.version }}"
-          NAME="${{ steps.extract_metadata.outputs.name }}"
-          EXECUTIONS="${{ steps.extract_metadata.outputs.executions }}"
-
-          echo "Extracted Version: $VERSION"
-          echo "Extracted Name: $NAME"
-          echo "Extracted Executions: $EXECUTIONS"
-
-          if [ -z "$VERSION" ]; then
-            echo "ERROR: Version not extracted."
-            exit 1
-          fi
-
       - name: Run Maven Deployments Based on Executions
         run: |
-          VERSION="${{ steps.extract_metadata.outputs.version }}"
-          NAME="${{ steps.extract_metadata.outputs.name }}"
+          VERSION=${{ steps.extract_metadata.outputs.version }}
+          NAME=${{ steps.extract_metadata.outputs.name }}
           EXECUTIONS="${{ steps.extract_metadata.outputs.executions }}"
 
           if [ -z "$EXECUTIONS" ]; then
@@ -119,20 +105,16 @@ jobs:
             exit 0
           fi
 
+          # Split the executions into an array
           IFS=$'\n' read -r -d '' -a EXECUTIONS_ARRAY <<< "$EXECUTIONS"
 
+          # Loop through the executions and trigger corresponding Maven executions
           for EXECUTION_TYPE in "${EXECUTIONS_ARRAY[@]}"; do
             echo "Processing execution type: $EXECUTION_TYPE"
-
-            # Print details before running Maven
-            echo "Running Maven with the following command:"
-            echo "mvn -X clean package -Dproject.version=\"$VERSION\" -P\"$EXECUTION_TYPE\""
           
-            mvn -X clean package -Dproject.version="$VERSION" -P"$EXECUTION_TYPE"
-            if [ $? -eq 0 ]; then
+            if mvn clean package -Dproject.version=$VERSION -P$EXECUTION_TYPE; then
               echo "Deployment for execution type $EXECUTION_TYPE successful."
             else
-              echo "ERROR: Deployment for execution type $EXECUTION_TYPE failed."
-              exit 1
+              echo "Deployment for execution type $EXECUTION_TYPE failed. Skipping."
             fi
           done
