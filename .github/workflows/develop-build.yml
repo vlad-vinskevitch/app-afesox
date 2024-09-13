@@ -57,6 +57,7 @@ jobs:
       - name: Detect changed YAML files
         id: detect_yaml
         run: |
+          # Detect changed YAML files, excluding any in the `.github` directory
           CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep -E '\.yml$' | grep -v '^\.github/')
           
           if [ -z "$CHANGED_FILES" ]; then
@@ -64,81 +65,56 @@ jobs:
             exit 0  # Exit gracefully if no relevant changes are detected
           fi
           
+          # Output to a temporary file for further processing
           echo "$CHANGED_FILES" > changed_files.txt
 
-      - name: Extract Version, Name, Executions, and Deploy
+      - name: Extract Version, Name, and Executions from Metadata
+        id: extract_metadata
         run: |
           # Read the changed files list from the temporary file
           CHANGED_FILES=$(cat changed_files.txt)
-
-          # Initialize a flag to detect if any deployment was done
-          DEPLOYMENT_DONE=false
-
-          # Loop through each changed file
+          
           for FILE in $CHANGED_FILES; do
             if [[ $FILE == *"metadata.yml"* ]]; then
               # Extract version, name, and executions from metadata.yml
               VERSION=$(yq e '.api.version' $FILE)
               NAME=$(yq e '.api.name' $FILE)
               EXECUTIONS=$(yq e '.api.executions[].type' $FILE)
-
-              # Skip if either version or name is not found
+          
+              # Skip if version or name is not found
               if [ -z "$VERSION" ] || [ -z "$NAME" ]; then
                 echo "No version or name found in $FILE. Skipping."
                 continue
               fi
-
-              # If no execution types found, skip
-              if [ -z "$EXECUTIONS" ]; then
-                echo "No execution types found in $FILE. Skipping."
-                continue
-              fi
-
-              # Construct artifact ID
-              ARTIFACT_ID="app-afesox-${NAME}-stable"
-
-              # Set environment variables for Maven
-              export VERSION
-              export ARTIFACT_ID
-              export NAME
-
-              # Loop through all the execution types
-              for EXECUTION_TYPE in $EXECUTIONS; do
-                # Check if the execution type has any corresponding changes in its directory
-                EXECUTION_DIR="apis/${NAME}/${EXECUTION_TYPE}"
-                RELEVANT_CHANGE=false
-
-                # Loop through changed files and see if any are in the execution directory
-                for CHANGED_FILE in $CHANGED_FILES; do
-                  if [[ $CHANGED_FILE == "${EXECUTION_DIR}/"* ]]; then
-                    RELEVANT_CHANGE=true
-                    break
-                  fi
-                done
-
-                # Deploy only if relevant changes were found
-                if [ "$RELEVANT_CHANGE" = true ]; then
-                  echo "Deploying ${NAME} for ${EXECUTION_TYPE} with artifact ID ${ARTIFACT_ID}, and version ${VERSION}..."
-
-                  # Execute the corresponding deployment
-                  if mvn clean package -Dproject.version=${VERSION} -Dexecution=${EXECUTION_TYPE}; then
-                    if mvn deploy -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
-                      echo "Deployment of ${ARTIFACT_ID} for ${EXECUTION_TYPE} with version ${VERSION} successful."
-                      DEPLOYMENT_DONE=true
-                    else
-                      echo "Deployment failed for ${EXECUTION_TYPE}. Version ${VERSION} might already be deployed for ${ARTIFACT_ID}."
-                    fi
-                  else
-                    echo "Maven package failed for ${EXECUTION_TYPE}. Skipping deployment."
-                  fi
-                else
-                  echo "No relevant changes for ${EXECUTION_TYPE} in the changed files. Skipping."
-                fi
-              done
+          
+              # Store the version, name, and executions for later steps
+              echo "::set-output name=version::$VERSION"
+              echo "::set-output name=name::$NAME"
+              echo "::set-output name=executions::$EXECUTIONS"
             fi
           done
 
-          if [ "$DEPLOYMENT_DONE" = false ]; then
-            echo "No deployments were performed. Please check the changed files."
-            exit 1
+      - name: Run Maven Deployments Based on Executions
+        run: |
+          VERSION=${{ steps.extract_metadata.outputs.version }}
+          NAME=${{ steps.extract_metadata.outputs.name }}
+          EXECUTIONS="${{ steps.extract_metadata.outputs.executions }}"
+
+          if [ -z "$EXECUTIONS" ]; then
+            echo "No execution types found in metadata. Skipping."
+            exit 0
           fi
+
+          # Split the executions into an array
+          IFS=$'\n' read -r -d '' -a EXECUTIONS_ARRAY <<< "$EXECUTIONS"
+
+          # Loop through the executions and trigger corresponding Maven executions
+          for EXECUTION_TYPE in "${EXECUTIONS_ARRAY[@]}"; do
+            echo "Processing execution type: $EXECUTION_TYPE"
+          
+            if mvn clean package -Dproject.version=$VERSION -P$EXECUTION_TYPE; then
+              echo "Deployment for execution type $EXECUTION_TYPE successful."
+            else
+              echo "Deployment for execution type $EXECUTION_TYPE failed. Skipping."
+            fi
+          done
