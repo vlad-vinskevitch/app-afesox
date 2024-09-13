@@ -115,7 +115,8 @@ jobs:
           for EXECUTION_TYPE in "${EXECUTIONS_ARRAY[@]}"; do
 
             mvn clean generate-sources -P"$EXECUTION_TYPE -Dproject.version="$VERSION" " -X 2>&1 | tee mvn_debug.log
-          
+            
+            mvn deploy
             # Debug output: Check Maven debug log for errors
             echo "Debug: Maven command completed. Check mvn_debug.log for details."
 
