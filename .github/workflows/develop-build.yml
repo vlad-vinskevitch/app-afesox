@@ -12,8 +12,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-        with:
-          fetch-depth: 2
 
       - name: Set up JDK 17
         uses: actions/setup-java@v3
@@ -118,8 +116,11 @@ jobs:
 
           for EXECUTION_TYPE in "${EXECUTIONS_ARRAY[@]}"; do
             echo "Processing execution type: $EXECUTION_TYPE"
+
+            # Print details before running Maven
+            echo "Running Maven with the following command:"
+            echo "mvn -X clean package -Dproject.version=\"$VERSION\" -P\"$EXECUTION_TYPE\""
           
-            # Debug Maven commands
             mvn -X clean package -Dproject.version="$VERSION" -P"$EXECUTION_TYPE"
             if [ $? -eq 0 ]; then
               echo "Deployment for execution type $EXECUTION_TYPE successful."
