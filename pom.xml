@@ -74,14 +74,13 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- Shade Plugin to Create Executable JAR -->
             <plugin>
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
-                <version>6.5.0</version> <!-- Ensure a compatible version -->
+                <version>7.8.0</version>
                 <executions>
-                    <!-- Existing code generation for server-side code -->
                     <execution>
-                        <id>generate-api-server</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
@@ -99,24 +98,6 @@
                             <supportingFilesToGenerate>
                                 ApiUtil.java
                             </supportingFilesToGenerate>
-                        </configuration>
-                    </execution>
-                    <!-- New code generation for RestTemplate client -->
-                    <execution>
-                        <id>generate-client</id>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                        <configuration>
-                            <inputSpec>${project.basedir}/apis/${env.NAME}/api-first/openapi-rest.yml</inputSpec>
-                            <generatorName>java</generatorName>
-                            <library>resttemplate</library> <!-- Specify the RestTemplate library -->
-                            <output>${project.build.directory}/generated-client</output>
-                            <configOptions>
-                                <apiPackage>com.app-afesox.${env.NAME}.client.api</apiPackage>
-                                <modelPackage>com.app-afesox.${env.NAME}.client.model</modelPackage>
-                                <invokerPackage>com.app-afesox.${env.NAME}.client.invoker</invokerPackage>
-                            </configOptions>
                         </configuration>
                     </execution>
                 </executions>
