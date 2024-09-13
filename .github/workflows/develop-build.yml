@@ -59,7 +59,8 @@ jobs:
         run: |
           # Detect changed YAML files, excluding any in the `.github` directory
           CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep -E '\.yml$' | grep -v '^\.github/')
-          
+          echo "Changed YAML files: $CHANGED_FILES"
+
           if [ -z "$CHANGED_FILES" ]; then
             echo "No YAML files changed outside of .github directory."
             exit 0  # Exit gracefully if no relevant changes are detected
@@ -72,17 +73,26 @@ jobs:
         run: |
           # Read the changed files list from the temporary file
           CHANGED_FILES=$(cat changed_files.txt)
-          
+          echo "Files to process: $CHANGED_FILES"
+
           # Initialize a flag to detect if any deployment was done
           DEPLOYMENT_DONE=false
 
           # Loop through each changed file
           for FILE in $CHANGED_FILES; do
+            echo "Processing file: $FILE"
+          
             if [[ $FILE == *"metadata.yml"* ]]; then
+              echo "Found metadata.yml file: $FILE"
+          
               # Extract version and name from metadata.yml
               VERSION=$(yq e '.api.version' $FILE)
               NAME=$(yq e '.api.name' $FILE)
               EXECUTIONS=$(yq e '.executions' $FILE)
+
+              echo "Extracted version: $VERSION"
+              echo "Extracted name: $NAME"
+              echo "Extracted executions: $EXECUTIONS"
 
               # Skip if either value is not found
               if [ -z "$VERSION" ] || [ -z "$NAME" ]; then
@@ -98,30 +108,25 @@ jobs:
               export ARTIFACT_ID
               export NAME
 
-              # Loop through executions and deploy
+              # Loop through executions and build
               for EXECUTION in $(echo "$EXECUTIONS" | yq e '.[] | .type' -); do
                 echo "Processing execution type: $EXECUTION"
 
-                # Find corresponding Maven profile
-                if mvn help:all-profiles | grep -q "$EXECUTION"; then
-                  echo "Found Maven profile for execution type: $EXECUTION"
+                echo "Running Maven command for execution type: $EXECUTION"
           
-                  echo "Deploying ${NAME} with artifact ID ${ARTIFACT_ID} and version ${VERSION}..."
-
-                  # Run Maven build and deploy for the current file
-                  mvn clean package -P $EXECUTION -Dproject.version=${VERSION} || exit 1
+                # Run Maven clean and generate-sources with the appropriate profile
+                mvn clean generate-sources -P $EXECUTION -Dproject.version=${VERSION} || exit 1
           
-                  if mvn deploy -P $EXECUTION -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
-                    echo "Deployment of ${ARTIFACT_ID} with version ${VERSION} successful."
-                    DEPLOYMENT_DONE=true
-                  else
-                    echo "Deployment failed. Version ${VERSION} might already be deployed for ${ARTIFACT_ID}."
-                    continue
-                  fi
+                if mvn deploy -P $EXECUTION -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
+                  echo "Deployment of ${ARTIFACT_ID} with version ${VERSION} successful."
+                  DEPLOYMENT_DONE=true
                 else
-                  echo "No Maven profile found for execution type: $EXECUTION"
+                  echo "Deployment failed. Version ${VERSION} might already be deployed for ${ARTIFACT_ID}."
+                  continue
                 fi
               done
+            else
+              echo "Skipping non-metadata.yml file: $FILE"
             fi
           done
 
