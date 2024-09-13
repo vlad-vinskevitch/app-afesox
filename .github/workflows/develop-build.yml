@@ -71,14 +71,12 @@ jobs:
       - name: Extract Version and Name
         id: extract_data
         run: |
-          # Read the changed files list from the temporary file
-          CHANGED_FILES=$(cat changed_files.txt)
-          
-          # Initialize a flag to detect if any deployment was done
-          DEPLOYMENT_DONE=false
+          # Initialize variables
+          VERSION=""
+          NAME=""
 
           # Loop through each changed file
-          for FILE in $CHANGED_FILES; do
+          for FILE in $(cat changed_files.txt); do
             if [[ $FILE == *"metadata.yml"* ]]; then
               # Extract version and name from metadata.yml
               VERSION=$(yq e '.api.version' $FILE)
@@ -90,46 +88,25 @@ jobs:
                 continue
               fi
 
-              # Construct artifact IDs for both executions
-              ARTIFACT_ID_API_FIRST="afesox-${NAME}-api-first-stable"
-              ARTIFACT_ID_CLIENT="afesox-${NAME}-client-stable"
-
-              # Export variables for Maven
+              # Set environment variables for Maven
               echo "VERSION=${VERSION}" >> $GITHUB_ENV
               echo "NAME=${NAME}" >> $GITHUB_ENV
-              echo "ARTIFACT_ID_API_FIRST=${ARTIFACT_ID_API_FIRST}" >> $GITHUB_ENV
-              echo "ARTIFACT_ID_CLIENT=${ARTIFACT_ID_CLIENT}" >> $GITHUB_ENV
 
-              echo "Deploying ${NAME} with artifact IDs ${ARTIFACT_ID_API_FIRST} and ${ARTIFACT_ID_CLIENT} with version ${VERSION}..."
-
-              # Set a flag indicating deployment
-              DEPLOYMENT_DONE=true
+              echo "Extracted Version: ${VERSION}"
+              echo "Extracted Name: ${NAME}"
             fi
           done
 
-          if [ "$DEPLOYMENT_DONE" = false ]; then
-            echo "No deployments were performed. Please check the changed files."
-            exit 1
-          fi
-
-      - name: Run Maven Build and Deploy for api-first
+      - name: Build and Deploy API-First Execution
         run: |
-          # Run Maven build and deploy for api-first
-          mvn clean package -Dproject.version=${VERSION} -Dexec.id=api-first || exit 1
-          if mvn deploy -Dproject.version=${VERSION} -DartifactId=${ARTIFACT_ID_API_FIRST}; then
-            echo "Deployment of ${ARTIFACT_ID_API_FIRST} with version ${VERSION} successful."
-          else
-            echo "Deployment failed for ${ARTIFACT_ID_API_FIRST}. Version ${VERSION} might already be deployed."
-            exit 1
-          fi
+          ARTIFACT_ID="app-afesox-${NAME}-api-first-stable"
+          echo "Building ${ARTIFACT_ID} with version ${VERSION}..."
+          mvn clean package -Dproject.version=${VERSION} -DartifactId=${ARTIFACT_ID}
+          mvn deploy -Dproject.version=${VERSION} -DartifactId=${ARTIFACT_ID}
 
-      - name: Run Maven Build and Deploy for client
+      - name: Build and Deploy Client Execution
         run: |
-          # Run Maven build and deploy for client
-          mvn clean package -Dproject.version=${VERSION} -Dexec.id=client || exit 1
-          if mvn deploy -Dproject.version=${VERSION} -DartifactId=${ARTIFACT_ID_CLIENT}; then
-            echo "Deployment of ${ARTIFACT_ID_CLIENT} with version ${VERSION} successful."
-          else
-            echo "Deployment failed for ${ARTIFACT_ID_CLIENT}. Version ${VERSION} might already be deployed."
-            exit 1
-          fi
+          ARTIFACT_ID="app-afesox-${NAME}-client-stable"
+          echo "Building ${ARTIFACT_ID} with version ${VERSION}..."
+          mvn clean package -Dproject.version=${VERSION} -DartifactId=${ARTIFACT_ID}
+          mvn deploy -Dproject.version=${VERSION} -DartifactId=${ARTIFACT_ID}
