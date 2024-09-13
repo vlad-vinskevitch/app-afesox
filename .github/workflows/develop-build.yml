@@ -117,11 +117,15 @@ jobs:
           for EXECUTION_TYPE in "${EXECUTIONS_ARRAY[@]}"; do
             echo "Processing execution type: $EXECUTION_TYPE"
           
-            # Debug Maven commands
+            # Print the Maven command for debugging
             echo "Running Maven with the following command:"
             echo "mvn clean package -Dproject.version=\"$VERSION\" -P\"$EXECUTION_TYPE\""
 
-            if mvn clean package -Dproject.version="$VERSION" -P"$EXECUTION_TYPE"; then
+            # Run Maven command and capture the output for debug purposes
+            mvn clean package -Dproject.version="$VERSION" -P"$EXECUTION_TYPE" -X 2>&1 | tee mvn_debug.log
+
+            # Check the result of the Maven command
+            if [ $? -eq 0 ]; then
               echo "Deployment for execution type $EXECUTION_TYPE successful."
             else
               echo "ERROR: Deployment for execution type $EXECUTION_TYPE failed. Skipping."
