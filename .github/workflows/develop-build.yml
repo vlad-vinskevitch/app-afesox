@@ -55,7 +55,14 @@ jobs:
       - name: Detect changed YAML files
         id: detect_yaml
         run: |
-          CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep -E '\.yml$' | grep -v '^\.github/')
+          # Determine if HEAD^ exists
+          if git rev-parse --verify HEAD^ >/dev/null 2>&1; then
+            CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep -E '\.yml$' | grep -v '^\.github/')
+          else
+            # Use a different approach if HEAD^ does not exist
+            echo "HEAD^ does not exist. Using HEAD."
+            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD | grep -E '\.yml$' | grep -v '^\.github/')
+          fi
           
           if [ -z "$CHANGED_FILES" ]; then
             echo "No YAML files changed outside of .github directory."
