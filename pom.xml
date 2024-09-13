@@ -115,7 +115,6 @@
                         <configuration>
                             <inputSpec>${project.basedir}/apis/${env.NAME}/api-first/openapi-rest.yml</inputSpec>
                             <generatorName>spring</generatorName>
-                            <library>spring-http-interface</library>
                             <output>${project.build.directory}/generated-sources</output>
                             <configOptions>
                                 <apiPackage>com.app-afesox.${env.NAME}.api-first.api</apiPackage>
