@@ -2,21 +2,21 @@ openapi: "3.0.0"
 info:
   title: API Auth Sitionix
   description: Api specification for auth service
-  version: 0.0.1
+  version: 0.0.2
   contact:
     name: APP Sitionix
 servers:
   - description: Localhost (dev only)
     url: 'http://localhost:8080/athssox'
 tags:
-  - name: Truck
+  - name: Dummy
 paths:
   /api/v1/dummy:
     get:
       summary: Dumm summary
       operationId: dummyOperation
       tags:
-        - Truck
+        - Dummy
       parameters:
         - name: limit
           in: query
