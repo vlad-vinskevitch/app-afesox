@@ -68,14 +68,29 @@ jobs:
 
       - name: Extract Version, Name, and Process Executions
         run: |
-          CHANGED_FILES=$(cat changed_files.txt)
+          # Read changed files from the text file
+          if [[ -f changed_files.txt ]]; then
+            CHANGED_FILES=$(cat changed_files.txt)
+            echo "Changed files: $CHANGED_FILES"
+          else
+            echo "No changed files detected."
+            exit 1
+          fi
+
           DEPLOYMENT_DONE=false
 
+          # Loop through the changed files
           for FILE in $CHANGED_FILES; do
             if [[ $FILE == *"metadata.yml"* ]]; then
               echo "Processing $FILE..."
 
-              # Extract version and name
+              # Check if the metadata.yml file exists and is readable
+              if [[ ! -f $FILE ]]; then
+                echo "File $FILE not found or not accessible. Skipping."
+                continue
+              fi
+
+              # Extract version and name using yq
               VERSION=$(yq e '.api.version' $FILE)
               NAME=$(yq e '.api.name' $FILE)
 
@@ -84,13 +99,24 @@ jobs:
                 continue
               fi
 
+              echo "Extracted Version: $VERSION"
+              echo "Extracted Name: $NAME"
+
               ARTIFACT_ID="app-afesox-${NAME}-stable"
               export VERSION
               export ARTIFACT_ID
               export NAME
 
-              # Loop through each execution type
+              # Extract all execution types from the metadata file
               EXECUTION_TYPES=$(yq e '.executions[].type' $FILE)
+              if [ -z "$EXECUTION_TYPES" ]; then
+                echo "No execution types found in $FILE. Skipping."
+                continue
+              fi
+
+              echo "Execution types found: $EXECUTION_TYPES"
+
+              # Loop through each execution type
               for EXECUTION_TYPE in $EXECUTION_TYPES; do
                 echo "Processing execution type: ${EXECUTION_TYPE}"
 
@@ -109,6 +135,7 @@ jobs:
                     ;;
                 esac
 
+                # Attempt deployment
                 if mvn deploy -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
                   echo "Deployment of ${ARTIFACT_ID} with version ${VERSION} successful."
                   DEPLOYMENT_DONE=true
@@ -117,9 +144,12 @@ jobs:
                   continue
                 fi
               done
+            else
+              echo "File $FILE is not a metadata.yml. Skipping."
             fi
           done
 
+          # If no deployments were done, print a message and exit with error
           if [ "$DEPLOYMENT_DONE" = false ]; then
             echo "No deployments were performed. Please check the changed files."
             exit 1
