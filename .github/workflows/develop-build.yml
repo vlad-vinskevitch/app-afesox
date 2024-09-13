@@ -131,11 +131,15 @@ jobs:
 
             # Run Maven command and capture the output for debug purposes
             mvn clean package -Dproject.version="$VERSION" -P"$EXECUTION_TYPE" -X 2>&1 | tee mvn_debug.log
+          
+            # Debug output: Check Maven debug log for errors
+            echo "Debug: Maven command completed. Check mvn_debug.log for details."
 
             # Check the result of the Maven command
             if [ $? -eq 0 ]; then
               echo "Deployment for execution type $EXECUTION_TYPE successful."
             else
               echo "ERROR: Deployment for execution type $EXECUTION_TYPE failed. Skipping."
+              exit 1  # Exit the script if a deployment fails
             fi
           done
