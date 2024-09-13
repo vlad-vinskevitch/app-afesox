@@ -81,14 +81,14 @@ jobs:
           # Loop through each changed file
           for FILE in $CHANGED_FILES; do
             echo "Processing file: $FILE"
-          
+
             if [[ $FILE == *"metadata.yml"* ]]; then
               echo "Found metadata.yml file: $FILE"
-          
+
               # Extract version and name from metadata.yml
               VERSION=$(yq e '.api.version' $FILE)
               NAME=$(yq e '.api.name' $FILE)
-              EXECUTIONS=$(yq e '.executions' $FILE)
+              EXECUTIONS=$(yq e 'api.executions[].type' $FILE)
 
               echo "Extracted version: $VERSION"
               echo "Extracted name: $NAME"
@@ -109,14 +109,14 @@ jobs:
               export NAME
 
               # Loop through executions and build
-              for EXECUTION in $(echo "$EXECUTIONS" | yq e '.[] | .type' -); do
+              for EXECUTION in $(echo "$EXECUTIONS"); do
                 echo "Processing execution type: $EXECUTION"
 
                 echo "Running Maven command for execution type: $EXECUTION"
-          
+
                 # Run Maven clean and generate-sources with the appropriate profile
                 mvn clean generate-sources -P $EXECUTION -Dproject.version=${VERSION} || exit 1
-          
+
                 if mvn deploy -P $EXECUTION -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
                   echo "Deployment of ${ARTIFACT_ID} with version ${VERSION} successful."
                   DEPLOYMENT_DONE=true
@@ -134,3 +134,4 @@ jobs:
             echo "No deployments were performed. Please check the changed files."
             exit 1
           fi
+      
