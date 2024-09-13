@@ -68,7 +68,8 @@ jobs:
           # Output to a temporary file for further processing
           echo "$CHANGED_FILES" > changed_files.txt
 
-      - name: Extract Version, Name, and Deploy for Each Changed File
+      - name: Extract Version, Name, and Set Execution ID
+        id: extract_data
         run: |
           # Read the changed files list from the temporary file
           CHANGED_FILES=$(cat changed_files.txt)
@@ -82,37 +83,45 @@ jobs:
               # Extract version and name from metadata.yml
               VERSION=$(yq e '.api.version' $FILE)
               NAME=$(yq e '.api.name' $FILE)
-          
+
               # Skip if either value is not found
               if [ -z "$VERSION" ] || [ -z "$NAME" ]; then
                 echo "No version or name found in $FILE. Skipping."
                 continue
               fi
 
-              # Construct artifact ID
-              ARTIFACT_ID="app-afesox-${NAME}-stable"
+              # Determine execution ID (this could be set based on some logic or default value)
+              EXECUTION_ID="client" # You can replace this with logic to set 'api-first' or 'client'
 
-              # Set environment variables for Maven
-              export VERSION
-              export ARTIFACT_ID
-              export NAME
+              # Construct artifact ID
+              ARTIFACT_ID="afesox-${NAME}-${EXECUTION_ID}-stable"
+
+              # Export variables for Maven
+              echo "VERSION=${VERSION}" >> $GITHUB_ENV
+              echo "ARTIFACT_ID=${ARTIFACT_ID}" >> $GITHUB_ENV
+              echo "NAME=${NAME}" >> $GITHUB_ENV
+              echo "EXECUTION_ID=${EXECUTION_ID}" >> $GITHUB_ENV
 
               echo "Deploying ${NAME} with artifact ID ${ARTIFACT_ID} and version ${VERSION}..."
 
-              # Run Maven build and deploy for the current file
-              mvn clean package -Dproject.version=${VERSION} || exit 1
-          
-              if mvn deploy -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
-                echo "Deployment of ${ARTIFACT_ID} with version ${VERSION} successful."
-                DEPLOYMENT_DONE=true
-              else
-                echo "Deployment failed. Version ${VERSION} might already be deployed for ${ARTIFACT_ID}."
-                continue
-              fi
+              # Set a flag indicating deployment
+              DEPLOYMENT_DONE=true
             fi
           done
 
           if [ "$DEPLOYMENT_DONE" = false ]; then
             echo "No deployments were performed. Please check the changed files."
+            exit 1
+          fi
+
+      - name: Run Maven Build and Deploy
+        run: |
+          # Run Maven build and deploy
+          mvn clean package -Dproject.version=${VERSION} -Dexec.id=${EXECUTION_ID} || exit 1
+
+          if mvn deploy -Dproject.version=${VERSION} -DartifactId=${ARTIFACT_ID}; then
+            echo "Deployment of ${ARTIFACT_ID} with version ${VERSION} successful."
+          else
+            echo "Deployment failed. Version ${VERSION} might already be deployed for ${ARTIFACT_ID}."
             exit 1
           fi

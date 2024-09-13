@@ -64,7 +64,7 @@
                 <executions>
                     <!-- API Generator Execution -->
                     <execution>
-                        <id>api-generator</id>
+                        <id>api-first</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
@@ -85,7 +85,7 @@
 
                     <!-- Client Generator Execution -->
                     <execution>
-                        <id>client-generator</id>
+                        <id>client</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
