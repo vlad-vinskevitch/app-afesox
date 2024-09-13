@@ -72,7 +72,7 @@ jobs:
         run: |
           # Read the changed files list from the temporary file
           CHANGED_FILES=$(cat changed_files.txt)
-          
+
           # Initialize a flag to detect if any deployment was done
           DEPLOYMENT_DONE=false
 
@@ -82,15 +82,23 @@ jobs:
               # Extract version and name from metadata.yml
               VERSION=$(yq e '.api.version' $FILE)
               NAME=$(yq e '.api.name' $FILE)
-          
+              EXECUTION_TYPE=$(yq e '.api.execution' $FILE)  # Add this line if you have an execution field
+
               # Skip if either value is not found
-              if [ -z "$VERSION" ] || [ -z "$NAME" ]; then
-                echo "No version or name found in $FILE. Skipping."
+              if [ -z "$VERSION" ] || [ -z "$NAME" ] || [ -z "$EXECUTION_TYPE" ]; then
+                echo "No version, name, or execution type found in $FILE. Skipping."
                 continue
               fi
 
-              # Construct artifact ID
-              ARTIFACT_ID="app-afesox-${NAME}-stable"
+              # Construct artifact ID based on execution type
+              if [ "$EXECUTION_TYPE" == "client" ]; then
+                ARTIFACT_ID="app-afesox-${NAME}-client-stable"
+              elif [ "$EXECUTION_TYPE" == "api-first" ]; then
+                ARTIFACT_ID="app-afesox-${NAME}-api-first-stable"
+              else
+                echo "Unknown execution type $EXECUTION_TYPE in $FILE. Skipping."
+                continue
+              fi
 
               # Set environment variables for Maven
               export VERSION
@@ -101,7 +109,7 @@ jobs:
 
               # Run Maven build and deploy for the current file
               mvn clean package -Dproject.version=${VERSION} || exit 1
-          
+
               if mvn deploy -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
                 echo "Deployment of ${ARTIFACT_ID} with version ${VERSION} successful."
                 DEPLOYMENT_DONE=true
@@ -116,3 +124,4 @@ jobs:
             echo "No deployments were performed. Please check the changed files."
             exit 1
           fi
+      
