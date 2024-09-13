@@ -93,16 +93,16 @@ jobs:
               ARTIFACT_ID="app-afesox-${NAME}-stable"
 
               # Set environment variables for Maven
-              echo "VERSION=${VERSION}" >> $GITHUB_ENV
-              echo "ARTIFACT_ID=${ARTIFACT_ID}" >> $GITHUB_ENV
-              echo "NAME=${NAME}" >> $GITHUB_ENV
+              export VERSION
+              export ARTIFACT_ID
+              export NAME
 
               echo "Deploying ${NAME} with artifact ID ${ARTIFACT_ID} and version ${VERSION}..."
 
               # Run Maven build and deploy for the current file
-              mvn clean package -Dproject.version=${VERSION} -Dproject.artifactId=${ARTIFACT_ID} || exit 1
+              mvn clean package -Dproject.version=${VERSION} || exit 1
           
-              if mvn deploy -Dproject.version=${VERSION} -Dproject.artifactId=${ARTIFACT_ID}; then
+              if mvn deploy -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
                 echo "Deployment of ${ARTIFACT_ID} with version ${VERSION} successful."
                 DEPLOYMENT_DONE=true
               else
