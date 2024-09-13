@@ -62,57 +62,57 @@ jobs:
           
           if [ -z "$CHANGED_FILES" ]; then
             echo "No YAML files changed outside of .github directory."
-            exit 1
+            exit 0  # Exit gracefully if no relevant changes are detected
           fi
           
           # Output to a temporary file for further processing
           echo "$CHANGED_FILES" > changed_files.txt
 
-      - name: Extract Version and Name from metadata.yml
-        id: extract_metadata
+      - name: Extract Version, Name, and Deploy for Each Changed File
         run: |
           # Read the changed files list from the temporary file
           CHANGED_FILES=$(cat changed_files.txt)
           
-          # Initialize variables
-          VERSION=""
-          NAME=""
+          # Initialize a flag to detect if any deployment was done
+          DEPLOYMENT_DONE=false
 
+          # Loop through each changed file
           for FILE in $CHANGED_FILES; do
             if [[ $FILE == *"metadata.yml"* ]]; then
               # Extract version and name from metadata.yml
               VERSION=$(yq e '.api.version' $FILE)
               NAME=$(yq e '.api.name' $FILE)
-              break
+          
+              # Skip if either value is not found
+              if [ -z "$VERSION" ] || [ -z "$NAME" ]; then
+                echo "No version or name found in $FILE. Skipping."
+                continue
+              fi
+
+              # Construct artifact ID
+              ARTIFACT_ID="app-afesox-${NAME}-stable"
+
+              # Set environment variables for Maven
+              export VERSION
+              export ARTIFACT_ID
+              export NAME
+
+              echo "Deploying ${NAME} with artifact ID ${ARTIFACT_ID} and version ${VERSION}..."
+
+              # Run Maven build and deploy for the current file
+              mvn clean package -Dproject.version=${VERSION} || exit 1
+          
+              if mvn deploy -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
+                echo "Deployment of ${ARTIFACT_ID} with version ${VERSION} successful."
+                DEPLOYMENT_DONE=true
+              else
+                echo "Deployment failed. Version ${VERSION} might already be deployed for ${ARTIFACT_ID}."
+                continue
+              fi
             fi
           done
 
-          # Export variables correctly using environment files
-          if [ -z "$VERSION" ] || [ -z "$NAME" ]; then
-            echo "No version or name found in the changed metadata files."
-            exit 1
-          fi
-
-          # Construct artifact ID
-          ARTIFACT_ID="app-afesox-${NAME}-stable"
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "ARTIFACT_ID=$ARTIFACT_ID" >> $GITHUB_ENV
-          echo "NAME=$NAME" >> $GITHUB_ENV  # Add NAME to environment
-
-      - name: Build and Deploy with Maven
-        run: |
-          # Check if the variables are properly set
-          if [ -z "${VERSION}" ] || [ -z "${ARTIFACT_ID}" ] || [ -z "${NAME}" ]; then
-            echo "VERSION, ARTIFACT_ID, or NAME is not set correctly."
-            exit 1
-          fi
-
-          echo "Deploying to package: ${ARTIFACT_ID} with version: ${VERSION} and name: ${NAME}"
-          mvn clean package -Dproject.version=${VERSION}
-          
-          if mvn deploy -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
-            echo "Deployment successful."
-          else
-            echo "Deployment failed. Version ${VERSION} might already be deployed."
+          if [ "$DEPLOYMENT_DONE" = false ]; then
+            echo "No deployments were performed. Please check the changed files."
             exit 1
           fi
