@@ -108,13 +108,22 @@ jobs:
           # Split the executions into an array
           IFS=$'\n' read -r -d '' -a EXECUTIONS_ARRAY <<< "$EXECUTIONS"
 
+          # Print debug information
+          echo "Extracted Version: $VERSION"
+          echo "Extracted Name: $NAME"
+          echo "Extracted Executions: ${EXECUTIONS_ARRAY[@]}"
+
           # Loop through the executions and trigger corresponding Maven executions
           for EXECUTION_TYPE in "${EXECUTIONS_ARRAY[@]}"; do
             echo "Processing execution type: $EXECUTION_TYPE"
           
-            if mvn clean package -Dproject.version=$VERSION -P$EXECUTION_TYPE; then
+            # Debug Maven commands
+            echo "Running Maven with the following command:"
+            echo "mvn clean package -Dproject.version=\"$VERSION\" -P\"$EXECUTION_TYPE\""
+
+            if mvn clean package -Dproject.version="$VERSION" -P"$EXECUTION_TYPE"; then
               echo "Deployment for execution type $EXECUTION_TYPE successful."
             else
-              echo "Deployment for execution type $EXECUTION_TYPE failed. Skipping."
+              echo "ERROR: Deployment for execution type $EXECUTION_TYPE failed. Skipping."
             fi
           done
