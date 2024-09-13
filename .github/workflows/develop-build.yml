@@ -79,49 +79,51 @@ jobs:
           # Loop through each changed file
           for FILE in $CHANGED_FILES; do
             if [[ $FILE == *"metadata.yml"* ]]; then
-              # Extract version and name from metadata.yml
+              # Extract version, name, and execution types from metadata.yml
               VERSION=$(yq e '.api.version' $FILE)
               NAME=$(yq e '.api.name' $FILE)
-              EXECUTION_TYPE=$(yq e '.api.execution' $FILE)  # Add this line if you have an execution field
+              EXECUTIONS=$(yq e '.api.executions[].type' $FILE)  # Extract execution types
 
-              # Skip if either value is not found
-              if [ -z "$VERSION" ] || [ -z "$NAME" ] || [ -z "$EXECUTION_TYPE" ]; then
-                echo "No version, name, or execution type found in $FILE. Skipping."
+              # Skip if any required values are not found
+              if [ -z "$VERSION" ] || [ -z "$NAME" ] || [ -z "$EXECUTIONS" ]; then
+                echo "No version, name, or execution types found in $FILE. Skipping."
                 continue
               fi
 
-              # Construct artifact ID based on execution type
-              if [ "$EXECUTION_TYPE" == "client" ]; then
-                ARTIFACT_ID="app-afesox-${NAME}-client-stable"
-              elif [ "$EXECUTION_TYPE" == "api-first" ]; then
-                ARTIFACT_ID="app-afesox-${NAME}-api-first-stable"
-              else
-                echo "Unknown execution type $EXECUTION_TYPE in $FILE. Skipping."
-                continue
-              fi
-
-              # Set environment variables for Maven
-              export VERSION
-              export ARTIFACT_ID
-              export NAME
-
-              echo "Deploying ${NAME} with artifact ID ${ARTIFACT_ID} and version ${VERSION}..."
-
-              # Run Maven build and deploy for the current file
-              mvn clean package -Dproject.version=${VERSION} || exit 1
-
-              if mvn deploy -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
-                echo "Deployment of ${ARTIFACT_ID} with version ${VERSION} successful."
-                DEPLOYMENT_DONE=true
-              else
-                echo "Deployment failed. Version ${VERSION} might already be deployed for ${ARTIFACT_ID}."
-                continue
-              fi
+              # Loop through each execution type
+              for EXECUTION_TYPE in $EXECUTIONS; do
+                if [ "$EXECUTION_TYPE" == "client" ]; then
+                  ARTIFACT_ID="app-afesox-${NAME}-client-stable"
+                  echo "Deploying client artifact ${ARTIFACT_ID} with version ${VERSION}..."
+                  mvn clean package -Dproject.version=${VERSION} || exit 1
+                  if mvn deploy -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
+                    echo "Client deployment of ${ARTIFACT_ID} with version ${VERSION} successful."
+                    DEPLOYMENT_DONE=true
+                  else
+                    echo "Client deployment failed. Version ${VERSION} might already be deployed for ${ARTIFACT_ID}."
+                  fi
+                elif [ "$EXECUTION_TYPE" == "api-first" ]; then
+                  ARTIFACT_ID="app-afesox-${NAME}-api-first-stable"
+                  echo "Deploying API First artifact ${ARTIFACT_ID} with version ${VERSION}..."
+                  mvn clean package -Dproject.version=${VERSION} || exit 1
+                  if mvn deploy -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
+                    echo "API First deployment of ${ARTIFACT_ID} with version ${VERSION} successful."
+                    DEPLOYMENT_DONE=true
+                  else
+                    echo "API First deployment failed. Version ${VERSION} might already be deployed for ${ARTIFACT_ID}."
+                  fi
+                else
+                  echo "Unknown execution type $EXECUTION_TYPE. Skipping."
+                  continue
+                fi
+              done
             fi
           done
 
+          # Check if any deployment was done
           if [ "$DEPLOYMENT_DONE" = false ]; then
             echo "No deployments were performed. Please check the changed files."
             exit 1
           fi
+      
       
