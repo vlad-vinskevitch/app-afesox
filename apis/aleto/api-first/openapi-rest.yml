@@ -13,7 +13,7 @@ tags:
 paths:
   /api/v1/dummy:
     get:
-      summary: Dummy summary
+      summary: Dumm summary
       operationId: dummyOperation
       tags:
         - Truck
