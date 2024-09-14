@@ -8,9 +8,13 @@
     <packaging>jar</packaging>
 
     <properties>
+        <!--suppress UnresolvedMavenProperty -->
         <env.project.artifactId>${env.ARTIFACT_ID}</env.project.artifactId>
+        <!--suppress UnresolvedMavenProperty -->
         <env.project.version>${env.VERSION}</env.project.version>
+        <!--suppress UnresolvedMavenProperty -->
         <env.artifact.name>${env.NAME}</env.artifact.name>
+
 <!--        <env.project.artifactId>aleto</env.project.artifactId>-->
 <!--        <env.project.version>1</env.project.version>-->
 <!--        <env.artifact.name>aleto</env.artifact.name>-->

@@ -57,15 +57,15 @@ jobs:
       - name: Detect changed YAML files
         id: detect_yaml
         run: |
-          # Detect changed YAML files, excluding any in the `.github` directory
-          CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep -E '\.yml$' | grep -v '^\.github/')
-          
+          # Detect changed YAML files, excluding deleted files and any in the `.github` directory
+          CHANGED_FILES=$(git diff --name-only --diff-filter=AM HEAD^ HEAD | grep -E '\.yml$' | grep -v '^\.github/')
+
           if [ -z "$CHANGED_FILES" ]; then
-            echo "No YAML files changed outside of .github directory."
+            echo "No YAML files changed outside of the .github directory."
             exit 0  # Exit gracefully if no relevant changes are detected
           fi
-          
-          # Output to a temporary file for further processing
+
+          # Output the list of changed files to a temporary file for further processing
           echo "$CHANGED_FILES" > changed_files.txt
 
       - name: Extract Version, Name, and Deploy for Each Changed File
