@@ -72,7 +72,7 @@ jobs:
         run: |
           # Read the changed files list from the temporary file
           CHANGED_FILES=$(cat changed_files.txt)
-          
+
           # Initialize a flag to detect if any deployment was done
           DEPLOYMENT_DONE=false
 
@@ -82,35 +82,40 @@ jobs:
               # Extract version and name from metadata.yml
               VERSION=$(yq e '.api.version' $FILE)
               NAME=$(yq e '.api.name' $FILE)
-              EXECUTION=$(yq e '.api.executions[].type' $FILE)
-          
+
               # Skip if either value is not found
               if [ -z "$VERSION" ] || [ -z "$NAME" ]; then
                 echo "No version or name found in $FILE. Skipping."
                 continue
               fi
 
-              # Construct artifact ID
-              ARTIFACT_ID="app-afesox-${NAME}-${EXECUTION}-stable"
+              # Loop through all executions in the metadata.yml
+              EXECUTIONS=$(yq e '.api.executions[].type' $FILE)
 
-              # Set environment variables for Maven
-              export VERSION
-              export ARTIFACT_ID
-              export NAME
-              export EXECUTION
+              for EXECUTION in $EXECUTIONS; do
+                # Construct artifact ID for each execution
+                ARTIFACT_ID="app-afesox-${NAME}-${EXECUTION}-stable"
 
-              echo "Deploying ${NAME} with artifact ID ${ARTIFACT_ID} and version ${VERSION} and type ${EXECUTION}..."
+                # Set environment variables for Maven
+                export VERSION
+                export ARTIFACT_ID
+                export NAME
+                export EXECUTION
 
-              # Run Maven build and deploy for the current file
-              mvn clean package -P${EXECUTION} -Dproject.version=${VERSION} || exit 1
-          
-              if mvn deploy -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
-                echo "Deployment of ${ARTIFACT_ID} with version ${VERSION} successful."
-                DEPLOYMENT_DONE=true
-              else
-                echo "Deployment failed. Version ${VERSION} might already be deployed for ${ARTIFACT_ID}."
-                continue
-              fi
+                echo "Deploying ${NAME} with artifact ID ${ARTIFACT_ID}, version ${VERSION}, and execution type ${EXECUTION}..."
+
+                # Run Maven build for the current execution
+                mvn clean package -P${EXECUTION} -Dproject.version=${VERSION} || exit 1
+
+                # Run Maven deploy for the current execution
+                if mvn deploy -P${EXECUTION} -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
+                  echo "Deployment of ${ARTIFACT_ID} with version ${VERSION} for execution type ${EXECUTION} successful."
+                  DEPLOYMENT_DONE=true
+                else
+                  echo "Deployment failed. Version ${VERSION} might already be deployed for ${ARTIFACT_ID}."
+                  continue
+                fi
+              done
             fi
           done
 
@@ -118,3 +123,4 @@ jobs:
             echo "No deployments were performed. Please check the changed files."
             exit 1
           fi
+      
