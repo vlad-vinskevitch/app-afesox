@@ -1,12 +1,10 @@
-name: Maven CI for Develop
+name: Execute Deploy
 
 on:
-  push:
-    branches:
-      - develop
+  workflow_dispatch:  # Allows manual triggering of the workflow
 
 jobs:
-  build:
+  execute-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -29,13 +27,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      - name: Verify GitHub Token Access
-        run: |
-          if [ -z "${{ secrets.APP_AFESOX }}" ]; then
-            echo "ERROR: Secret APP_AFESOX is not set or not accessible."
-            exit 1
-          fi
-
       - name: Setup Maven settings
         run: |
           mkdir -p ~/.m2
@@ -49,58 +40,17 @@ jobs:
                   </servers>
                 </settings>" > ~/.m2/settings.xml
 
-      - name: Install yq
+      - name: Deploy Maven Artifact
         run: |
-          wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq
-          chmod +x /usr/local/bin/yq
+          ARTIFACT_ID="app-afesox-${NAME}-${EXECUTION}-stable"
+          echo "Deploying ${NAME} with artifact ID ${ARTIFACT_ID}, version ${VERSION}, and execution type ${EXECUTION}..."
 
-      - name: Detect changed YAML files
-        id: detect_yaml
-        run: |
-          # Detect changed YAML files, excluding any in the .github directory
-          CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep -E '\.yml$' | grep -v '^\.github/')
+          # Run Maven build for the current execution
+          mvn clean package -P${EXECUTION} -Dproject.version=${VERSION}
           
-          if [ -z "$CHANGED_FILES" ]; then
-            echo "No YAML files changed outside of .github directory."
-            exit 0  # Exit gracefully if no relevant changes are detected
+          # Run Maven deploy for the current execution
+          if mvn deploy -P${EXECUTION} -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
+            echo "Deployment of ${ARTIFACT_ID} with version ${VERSION} for execution type ${EXECUTION} successful."
+          else
+            echo "Deployment failed. Version ${VERSION} might already be deployed for ${ARTIFACT_ID}."
           fi
-          
-          # Output the list of changed files for further processing
-          echo "changed_files=$CHANGED_FILES" >> "$GITHUB_ENV"
-
-      - name: Extract and Process Changed Files
-        if: env.changed_files != ''
-        run: |
-          # Read the changed files from the environment variable
-          for FILE in ${changed_files}; do
-            if [[ $FILE == *"metadata.yml"* ]]; then
-              # Extract version and name from metadata.yml
-              VERSION=$(yq e '.api.version' $FILE)
-              NAME=$(yq e '.api.name' $FILE)
-
-              if [ -z "$VERSION" ] || [ -z "$NAME" ]; then
-                echo "No version or name found in $FILE. Skipping."
-                continue
-              fi
-
-              # Output extracted variables to be used in subsequent steps
-              echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-              echo "NAME=$NAME" >> "$GITHUB_ENV"
-
-              # Process each execution type
-              EXECUTIONS=$(yq e '.api.executions[].type' $FILE)
-              echo "$EXECUTIONS" > executions.txt
-
-              # Run a step sets up deployment execution for each execution type
-              while IFS= read -r EXECUTION; do
-                echo "EXECUTION=$EXECUTION" >> "$GITHUB_ENV"
-                echo "::group::Processing ${NAME} with execution type ${EXECUTION}"
-                # Trigger the execute-deploy workflow manually
-                gh workflow run execute-deploy
-                echo "::endgroup::"
-              done < executions.txt
-            fi
-          done
-          rm -f executions.txt  # Clean up temporary execution types file
-      - name: Cleanup
-        run: rm -f changed_files.txt

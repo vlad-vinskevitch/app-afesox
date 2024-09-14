@@ -1,7 +1,17 @@
 name: Execute Deploy
 
 on:
-  workflow_dispatch:  # Allows manual triggering of the workflow
+  workflow_dispatch:
+    inputs:
+      EXTRACTED_VERSION:
+        description: 'Version extracted from the file'
+        required: true
+      EXTRACTED_NAME:
+        description: 'Name extracted from the file'
+        required: true
+      EXTRACTED_EXECUTION:
+        description: 'Execution type extracted from the file'
+        required: true
 
 jobs:
   execute-deploy:
@@ -42,15 +52,15 @@ jobs:
 
       - name: Deploy Maven Artifact
         run: |
-          ARTIFACT_ID="app-afesox-${NAME}-${EXECUTION}-stable"
-          echo "Deploying ${NAME} with artifact ID ${ARTIFACT_ID}, version ${VERSION}, and execution type ${EXECUTION}..."
+          ARTIFACT_ID="app-afesox-${{ github.event.inputs.EXTRACTED_NAME }}-${{ github.event.inputs.EXTRACTED_EXECUTION }}-stable"
+          echo "Deploying ${{ github.event.inputs.EXTRACTED_NAME }} with artifact ID ${ARTIFACT_ID}, version ${{ github.event.inputs.EXTRACTED_VERSION }}, and execution type ${{ github.event.inputs.EXTRACTED_EXECUTION }}..."
 
           # Run Maven build for the current execution
-          mvn clean package -P${EXECUTION} -Dproject.version=${VERSION}
+          mvn clean package -P${{ github.event.inputs.EXTRACTED_EXECUTION }} -Dproject.version=${{ github.event.inputs.EXTRACTED_VERSION }}
           
           # Run Maven deploy for the current execution
-          if mvn deploy -P${EXECUTION} -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
-            echo "Deployment of ${ARTIFACT_ID} with version ${VERSION} for execution type ${EXECUTION} successful."
+          if mvn deploy -P${{ github.event.inputs.EXTRACTED_EXECUTION }} -Dproject.version=${{ github.event.inputs.EXTRACTED_VERSION }} -Dpackage=${ARTIFACT_ID}; then
+            echo "Deployment of ${ARTIFACT_ID} with version ${{ github.event.inputs.EXTRACTED_VERSION }} for execution type ${{ github.event.inputs.EXTRACTED_EXECUTION }} successful."
           else
-            echo "Deployment failed. Version ${VERSION} might already be deployed for ${ARTIFACT_ID}."
+            echo "Deployment failed. Version ${{ github.event.inputs.EXTRACTED_VERSION }} might already be deployed for ${ARTIFACT_ID}."
           fi
