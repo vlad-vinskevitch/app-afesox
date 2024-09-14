@@ -102,7 +102,7 @@ jobs:
               echo "Deploying ${NAME} with artifact ID ${ARTIFACT_ID} and version ${VERSION} and type ${EXECUTION}..."
 
               # Run Maven build and deploy for the current file
-              mvn clean generate-sources -P${EXECUTION} -Dproject.version=${VERSION} || exit 1
+              mvn clean package -P${EXECUTION} -Dproject.version=${VERSION} || exit 1
           
               if mvn deploy -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
                 echo "Deployment of ${ARTIFACT_ID} with version ${VERSION} successful."
