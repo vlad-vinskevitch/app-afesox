@@ -1,7 +1,10 @@
 api:
-  version: 0.0.2
+  version: 0.0.3
   visibility: PUBLIC
   metadata:
     version: "1.0"
   type: application
   name: aleto
+  executions:
+    - type: client
+    - type: api-first
