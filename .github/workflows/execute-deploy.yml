@@ -54,7 +54,7 @@ deploy:
             echo "Extracted version: $VERSION"
             echo "Extracted name: $NAME"
 
-            if [ -z "$VERSION" ] || [ -z "$NAME" ]; then
+            if [ -z "$VERSION" ]  [ -z "$NAME" ]; then
               echo "No version or name found in $FILE. Skipping."
               continue
             fi
@@ -66,11 +66,13 @@ deploy:
               ARTIFACT_ID="app-afesox-${NAME}-${EXECUTION}-stable"
               echo "Deploying ${NAME} with artifact ID ${ARTIFACT_ID}, version ${VERSION}, and execution type ${EXECUTION}..."
 
-              echo "Configuring Maven properties: project.version=${VERSION}, artifact.id=${ARTIFACT_ID}, project.name=${NAME}"
+              export ARTIFACT_ID
+              export VERSION
+              export NAME
+              export EXECUTION
 
-              mvn clean package -P${EXECUTION} -Dproject.version=${VERSION} -Dartifact.id=${ARTIFACT_ID} -Dproject.name=${NAME}
-        
-              if mvn deploy -P${EXECUTION} -Dproject.version=${VERSION} -Dartifact.id=${ARTIFACT_ID} -Dproject.name=${NAME}; then
+              mvn clean package -P${EXECUTION} -Dproject.version=${VERSION}  exit 1
+              if mvn deploy -P${EXECUTION} -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
                 echo "Deployment of ${ARTIFACT_ID} with version ${VERSION} for execution type ${EXECUTION} successful."
                 DEPLOYMENT_DONE=true
               else
