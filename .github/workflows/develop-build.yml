@@ -57,7 +57,7 @@ jobs:
       - name: Detect changed YAML files
         id: detect_yaml
         run: |
-          # Detect changed YAML files, excluding any in the `.github` directory
+          # Detect changed YAML files, excluding any in the .github directory
           CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep -E '\.yml$' | grep -v '^\.github/')
           
           if [ -z "$CHANGED_FILES" ]; then
@@ -65,62 +65,42 @@ jobs:
             exit 0  # Exit gracefully if no relevant changes are detected
           fi
           
-          # Output to a temporary file for further processing
-          echo "$CHANGED_FILES" > changed_files.txt
+          # Output the list of changed files for further processing
+          echo "changed_files=$CHANGED_FILES" >> "$GITHUB_ENV"
 
-      - name: Extract Version, Name, and Deploy for Each Changed File
+      - name: Extract and Process Changed Files
+        if: env.changed_files != ''
         run: |
-          # Read the changed files list from the temporary file
-          CHANGED_FILES=$(cat changed_files.txt)
-
-          # Initialize a flag to detect if any deployment was done
-          DEPLOYMENT_DONE=false
-
-          # Loop through each changed file
-          for FILE in $CHANGED_FILES; do
+          # Read the changed files from the environment variable
+          for FILE in ${changed_files}; do
             if [[ $FILE == *"metadata.yml"* ]]; then
               # Extract version and name from metadata.yml
               VERSION=$(yq e '.api.version' $FILE)
               NAME=$(yq e '.api.name' $FILE)
 
-              # Skip if either value is not found
               if [ -z "$VERSION" ] || [ -z "$NAME" ]; then
                 echo "No version or name found in $FILE. Skipping."
                 continue
               fi
 
-              # Loop through all executions in the metadata.yml
+              # Output extracted variables to be used in subsequent steps
+              echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+              echo "NAME=$NAME" >> "$GITHUB_ENV"
+
+              # Process each execution type
               EXECUTIONS=$(yq e '.api.executions[].type' $FILE)
+              echo "$EXECUTIONS" > executions.txt
 
-              for EXECUTION in $EXECUTIONS; do
-                # Construct artifact ID for each execution
-                ARTIFACT_ID="app-afesox-${NAME}-${EXECUTION}-stable"
-
-                # Set environment variables for Maven
-                export VERSION
-                export ARTIFACT_ID
-                export NAME
-                export EXECUTION
-
-                echo "Deploying ${NAME} with artifact ID ${ARTIFACT_ID}, version ${VERSION}, and execution type ${EXECUTION}..."
-
-                # Run Maven build for the current execution
-                mvn clean package -P${EXECUTION} -Dproject.version=${VERSION} || exit 1
-
-                # Run Maven deploy for the current execution
-                if mvn deploy -P${EXECUTION} -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
-                  echo "Deployment of ${ARTIFACT_ID} with version ${VERSION} for execution type ${EXECUTION} successful."
-                  DEPLOYMENT_DONE=true
-                else
-                  echo "Deployment failed. Version ${VERSION} might already be deployed for ${ARTIFACT_ID}."
-                  continue
-                fi
-              done
+              # Run a step sets up deployment execution for each execution type
+              while IFS= read -r EXECUTION; do
+                echo "EXECUTION=$EXECUTION" >> "$GITHUB_ENV"
+                echo "::group::Processing ${NAME} with execution type ${EXECUTION}"
+                # Trigger the execute-deploy workflow manually
+                gh workflow run execute-deploy
+                echo "::endgroup::"
+              done < executions.txt
             fi
           done
-
-          if [ "$DEPLOYMENT_DONE" = false ]; then
-            echo "No deployments were performed. Please check the changed files."
-            exit 1
-          fi
-      
+          rm -f executions.txt  # Clean up temporary execution types file
+      - name: Cleanup
+        run: rm -f changed_files.txt

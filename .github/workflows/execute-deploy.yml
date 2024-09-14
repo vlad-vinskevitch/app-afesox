@@ -1,0 +1,56 @@
+name: Execute Deploy
+
+on:
+  workflow_dispatch:  # Allows manual triggering of the workflow
+
+jobs:
+  execute-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 2  # Ensure previous commit is available for comparison
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Cache Maven packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Setup Maven settings
+        run: |
+          mkdir -p ~/.m2
+          echo "<settings>
+                  <servers>
+                    <server>
+                      <id>github</id>
+                      <username>${{ github.actor }}</username>
+                      <password>${{ secrets.APP_AFESOX }}</password>
+                    </server>
+                  </servers>
+                </settings>" > ~/.m2/settings.xml
+
+      - name: Deploy Maven Artifact
+        run: |
+          ARTIFACT_ID="app-afesox-${NAME}-${EXECUTION}-stable"
+          echo "Deploying ${NAME} with artifact ID ${ARTIFACT_ID}, version ${VERSION}, and execution type ${EXECUTION}..."
+
+          # Run Maven build for the current execution
+          mvn clean package -P${EXECUTION} -Dproject.version=${VERSION}
+          
+          # Run Maven deploy for the current execution
+          if mvn deploy -P${EXECUTION} -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
+            echo "Deployment of ${ARTIFACT_ID} with version ${VERSION} for execution type ${EXECUTION} successful."
+          else
+            echo "Deployment failed. Version ${VERSION} might already be deployed for ${ARTIFACT_ID}."
+          fi
