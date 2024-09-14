@@ -11,9 +11,8 @@
         <env.project.artifactId>${env.ARTIFACT_ID}</env.project.artifactId>
         <env.project.version>${env.VERSION}</env.project.version>
         <env.artifact.name>${env.NAME}</env.artifact.name>
-
 <!--        <env.project.artifactId>aleto</env.project.artifactId>-->
-<!--        <env.project.version>9</env.project.version>-->
+<!--        <env.project.version>1</env.project.version>-->
 <!--        <env.artifact.name>aleto</env.artifact.name>-->
     </properties>
 
