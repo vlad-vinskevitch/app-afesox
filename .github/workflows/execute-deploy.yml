@@ -66,8 +66,13 @@ deploy:
               ARTIFACT_ID="app-afesox-${NAME}-${EXECUTION}-stable"
               echo "Deploying ${NAME} with artifact ID ${ARTIFACT_ID}, version ${VERSION}, and execution type ${EXECUTION}..."
 
-              mvn clean package -P${EXECUTION} -Dproject.version=${VERSION}
-              if mvn deploy -P${EXECUTION} -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
+              echo "ARTIFACT_ID=$ARTIFACT_ID" >> $GITHUB_ENV
+              echo "VERSION=$VERSION" >> $GITHUB_ENV
+              echo "NAME=$NAME" >> $GITHUB_ENV
+              echo "EXECUTION=$EXECUTION" >> $GITHUB_ENV
+
+              mvn clean package -P${EXECUTION} -Dproject.version=${VERSION} -Dartifact.id=${ARTIFACT_ID} -Dproject.name=${NAME}
+              if mvn deploy -P${EXECUTION} -Dproject.version=${VERSION} -Dartifact.id=${ARTIFACT_ID} -Dproject.name=${NAME}; then
                 echo "Deployment of ${ARTIFACT_ID} with version ${VERSION} for execution type ${EXECUTION} successful."
                 DEPLOYMENT_DONE=true
               else
