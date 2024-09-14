@@ -1,89 +1,99 @@
-deploy:
-  runs-on: ubuntu-latest
-  needs: build
-  if: needs.build.outputs.changed_files != ''
+name: Maven CI for Develop - Deploy
 
-  steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 2
+on:
+  workflow_run:
+    workflows: ["Maven CI for Develop - Build"]
+    types:
+      - completed
 
-    - name: Set up JDK 17
-      uses: actions/setup-java@v3
-      with:
-        distribution: 'temurin'
-        java-version: '17'
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
 
-    - name: Cache Maven packages
-      uses: actions/cache@v2
-      with:
-        path: ~/.m2/repository
-        key: ${{ runner.os }}-maven-${{ hashFiles('/pom.xml') }}
-        restore-keys: |
-          ${{ runner.os }}-maven-
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
 
-    - name: Setup Maven settings
-      run: |
-        mkdir -p ~/.m2
-        echo "<settings>
-                <servers>
-                  <server>
-                    <id>github</id>
-                    <username>${{ github.actor }}</username>
-                    <password>${{ secrets.APP_AFESOX }}</password>
-                  </server>
-                </servers>
-              </settings>" > ~/.m2/settings.xml
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-    - name: Process and Deploy Changed YAML files
-      run: |
-        set -e  # Exit immediately if a command exits with a non-zero status
-        
-        DEPLOYMENT_DONE=false
-        CHANGED_FILES="${{ needs.build.outputs.changed_files }}"
-        echo "Processing changed files: $CHANGED_FILES"
-        
-        for FILE in $CHANGED_FILES; do
-          if [[ $FILE == *"metadata.yml"* ]]; then
-            echo "Processing file: $FILE"
-        
-            VERSION=$(yq e '.api.version' $FILE)
-            NAME=$(yq e '.api.name' $FILE)
-        
-            echo "Extracted version: $VERSION"
-            echo "Extracted name: $NAME"
-        if [ -z "$VERSION" ]  [ -z "$NAME" ]; then
-                        echo "No version or name found in $FILE. Skipping."
-                        continue
-                      fi
+      - name: Cache Maven packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
 
-                      EXECUTIONS=$(yq e '.api.executions[].type' $FILE)
-                      echo "$EXECUTIONS" > executions.txt
+      - name: Setup Maven settings
+        run: |
+          mkdir -p ~/.m2
+          echo "<settings>
+                  <servers>
+                    <server>
+                      <id>github</id>
+                      <username>${{ github.actor }}</username>
+                      <password>${{ secrets.APP_AFESOX }}</password>
+                    </server>
+                  </servers>
+                </settings>" > ~/.m2/settings.xml
 
-                      while IFS= read -r EXECUTION; do
-                        ARTIFACT_ID="app-afesox-${NAME}-${EXECUTION}-stable"
-                        echo "Deploying ${NAME} with artifact ID ${ARTIFACT_ID}, version ${VERSION}, and execution type ${EXECUTION}..."
+      - name: Process and Deploy Changed YAML files
+        run: |
+          set -e  # Exit immediately if a command exits with a non-zero status
 
-                        export ARTIFACT_ID
-                        export VERSION
-                        export NAME
-                        export EXECUTION
+          # Retrieve the output from the build
+          CHANGED_FILES="${{ needs.build.outputs.changed_files }}"
+          echo "Processing changed files: $CHANGED_FILES"
 
-                        mvn clean package -P${EXECUTION} -Dproject.version=${VERSION}  exit 1
-                        if mvn deploy -P${EXECUTION} -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
-                          echo "Deployment of ${ARTIFACT_ID} with version ${VERSION} for execution type ${EXECUTION} successful."
-                          DEPLOYMENT_DONE=true
-                        else
-                          echo "Deployment failed. Version ${VERSION} might already be deployed for ${ARTIFACT_ID}."
-                        fi
-                      done < executions.txt
-                    fi
-                  done
+          DEPLOYMENT_DONE=false
 
-                  rm -f executions.txt
+          for FILE in $CHANGED_FILES; do
+            if [[ $FILE == *"metadata.yml"* ]]; then
+              echo "Processing file: $FILE"
 
-                  if [ "$DEPLOYMENT_DONE" = false ]; then
-                    echo "No deployments were performed. Please check the changed files."
-                    exit 1
-                  fi
+              VERSION=$(yq e '.api.version' $FILE)
+              NAME=$(yq e '.api.name' $FILE)
+
+              echo "Extracted version: $VERSION"
+              echo "Extracted name: $NAME"
+
+              if [ -z "$VERSION" ]  [ -z "$NAME" ]; then
+                echo "No version or name found in $FILE. Skipping."
+                continue
+              fi
+
+              EXECUTIONS=$(yq e '.api.executions[].type' $FILE)
+              echo "$EXECUTIONS" > executions.txt
+
+              while IFS= read -r EXECUTION; do
+                ARTIFACT_ID="app-afesox-${NAME}-${EXECUTION}-stable"
+                echo "Deploying ${NAME} with artifact ID ${ARTIFACT_ID}, version ${VERSION}, and execution type ${EXECUTION}..."
+
+                export ARTIFACT_ID
+                export VERSION
+                export NAME
+                export EXECUTION
+
+                mvn clean package -P${EXECUTION} -Dproject.version=${VERSION}  exit 1
+                if mvn deploy -P${EXECUTION} -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
+                  echo "Deployment of ${ARTIFACT_ID} with version ${VERSION} for execution type ${EXECUTION} successful."
+                  DEPLOYMENT_DONE=true
+                else
+                  echo "Deployment failed. Version ${VERSION} might already be deployed for ${ARTIFACT_ID}."
+                fi
+              done < executions.txt
+            fi
+          done
+
+          rm -f executions.txt
+
+          if [ "$DEPLOYMENT_DONE" = false ]; then
+            echo "No deployments were performed. Please check the changed files."
+            exit 1
+          fi

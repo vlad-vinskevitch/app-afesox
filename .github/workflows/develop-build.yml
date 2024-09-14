@@ -1,4 +1,4 @@
-name: Maven CI for Develop
+name: Maven CI for Develop - Build
 
 on:
   push:
@@ -28,7 +28,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('/pom.xml') }}
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
 
@@ -66,5 +66,5 @@ jobs:
             echo "::set-output name=changed_files::$CHANGED_FILES"
           else
             echo "No YAML files changed outside of .github directory."
-            exit 0  # Exit gracefully if no relevant changes are detected
+            echo "::set-output name=changed_files::"
           fi
