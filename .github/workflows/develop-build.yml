@@ -1,17 +1,19 @@
-name: Execute Deploy
+name: Maven CI for Develop
 
 on:
-  workflow_dispatch:  # Allows manual triggering of the workflow
+  push:
+    branches:
+      - develop
 
 jobs:
-  execute-deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
         with:
-          fetch-depth: 2  # Ensure previous commit is available for comparison
+          fetch-depth: 2
 
       - name: Set up JDK 17
         uses: actions/setup-java@v3
@@ -27,6 +29,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
+      - name: Verify GitHub Token Access
+        run: |
+          if [ -z "${{ secrets.APP_AFESOX }}" ]; then
+            echo "ERROR: Secret APP_AFESOX is not set or not accessible."
+            exit 1
+          fi
+
       - name: Setup Maven settings
         run: |
           mkdir -p ~/.m2
@@ -40,17 +49,66 @@ jobs:
                   </servers>
                 </settings>" > ~/.m2/settings.xml
 
-      - name: Deploy Maven Artifact
+      - name: Install yq
         run: |
-          ARTIFACT_ID="app-afesox-${NAME}-${EXECUTION}-stable"
-          echo "Deploying ${NAME} with artifact ID ${ARTIFACT_ID}, version ${VERSION}, and execution type ${EXECUTION}..."
+          wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq
+          chmod +x /usr/local/bin/yq
 
-          # Run Maven build for the current execution
-          mvn clean package -P${EXECUTION} -Dproject.version=${VERSION}
+      - name: Detect changed YAML files
+        id: detect_yaml
+        run: |
+          CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep -E '\.yml$' | grep -v '^\.github/')
           
-          # Run Maven deploy for the current execution
-          if mvn deploy -P${EXECUTION} -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
-            echo "Deployment of ${ARTIFACT_ID} with version ${VERSION} for execution type ${EXECUTION} successful."
-          else
-            echo "Deployment failed. Version ${VERSION} might already be deployed for ${ARTIFACT_ID}."
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No YAML files changed outside of .github directory."
+            exit 0
           fi
+          
+          echo "changed_files=$CHANGED_FILES" >> "$GITHUB_ENV"
+
+      - name: Extract and Process Changed Files
+        id: process_files
+        if: env.changed_files != ''
+        run: |
+          DEPLOYMENT_DONE=false
+          
+          for FILE in ${changed_files}; do
+            if [[ $FILE == *"metadata.yml"* ]]; then
+              VERSION=$(yq e '.api.version' $FILE)
+              NAME=$(yq e '.api.name' $FILE)
+
+              if [ -z "$VERSION" ] || [ -z "$NAME" ]; then
+                echo "No version or name found in $FILE. Skipping."
+                continue
+              fi
+
+              echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+              echo "NAME=$NAME" >> "$GITHUB_ENV"
+
+              EXECUTIONS=$(yq e '.api.executions[].type' $FILE)
+              echo "$EXECUTIONS" > executions.txt
+
+              while IFS= read -r EXECUTION; do
+                echo "EXECUTION=$EXECUTION" >> "$GITHUB_ENV"
+                ARTIFACT_ID="app-afesox-${NAME}-${EXECUTION}-stable"
+                echo "Deploying ${NAME} with artifact ID ${ARTIFACT_ID}, version ${VERSION}, and execution type ${EXECUTION}..."
+
+                if mvn clean package -P${EXECUTION} -Dproject.version=${VERSION} && mvn deploy -P${EXECUTION} -Dproject.version=${VERSION} -Dpackage=${ARTIFACT_ID}; then
+                  echo "Deployment of ${ARTIFACT_ID} with version ${VERSION} for execution type ${EXECUTION} successful."
+                  DEPLOYMENT_DONE=true
+                else
+                  echo "Deployment failed. Version ${VERSION} might already be deployed for ${ARTIFACT_ID}."
+                fi
+
+              done < executions.txt
+            fi
+          done
+          rm -f executions.txt
+
+          if [ "$DEPLOYMENT_DONE" = false ]; then
+            echo "No deployments were performed. Please check the changed files."
+            exit 1
+          fi
+
+      - name: Cleanup
+        run: rm -f changed_files.txt
