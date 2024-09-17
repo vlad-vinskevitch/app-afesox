@@ -12,7 +12,7 @@ tags:
   - name: User
 paths:
   /api/v2/user:
-    get:
+    post:
       summary: user
       operationId: userOperation
       tags:
