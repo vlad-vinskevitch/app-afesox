@@ -2,58 +2,58 @@ openapi: "3.0.0"
 info:
   title: API Auth Sitionix
   description: Api specification for auth service
-  version: 0.0.2
+  version: 0.0.3
   contact:
     name: APP Sitionix
 servers:
   - description: Localhost (dev only)
     url: 'http://localhost:8080/athssox'
 tags:
-  - name: Truck
+  - name: User
 paths:
-  /api/v1/dummy:
+  /api/v2/user:
     get:
-      summary: Dummy summary
-      operationId: dummyOperation
+      summary: user
+      operationId: userOperation
       tags:
-        - Truck
+        - User
       parameters:
-        - name: limit
+        - name: username
           in: query
-          required: false
+          required: true
           schema:
-            type: integer
-            format: int64
-        - name: statusId
+            type: string
+            format: string
+        - name: password
           in: query
-          required: false
+          required: true
           schema:
-            type: integer
-            format: int64
+            type: string
+            format: string
       responses:
         '200':
-          description: A list of pets
+          description: User
           content:
             application/json:
               schema:
-                type: array
+                type: object
                 items:
-                  $ref: '#/components/schemas/Pet'
+                  $ref: '#/components/schemas/User'
 components:
   schemas:
-    Pet:
+    User:
       type: object
       required:
-        - id
-        - name
+        - username
+        - password
       properties:
-        id:
-          type: integer
-          format: int64
-        name:
+        username:
           type: string
-        tag:
+          format: string
+        password:
           type: string
+          format: string
+
     Error:
       type: object
       required:
