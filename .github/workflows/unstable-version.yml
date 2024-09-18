@@ -10,6 +10,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Print Event Details
+        run: |
+          echo "Comment Body: ${{ github.event.comment.body }}"
+          echo "Triggered by: ${{ github.event.comment.user.login }}"
+          echo "Action: ${{ github.event.action }}"
+
       - name: Check for `/generate` comment
         if: ${{ contains(github.event.comment.body, '/generate') }}
         run: echo "Triggering OpenAPI generation process..."
