@@ -1,0 +1,4 @@
+spec:
+  apis:
+    - name: API Authentication
+      path: /apis/athssox/openapi-rest.yml

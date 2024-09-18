@@ -1,0 +1,39 @@
+name: OpenAPI Generator
+
+on:
+  issue_comment:
+    types:
+      - created
+
+jobs:
+  check-comment:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check for `/generate` comment
+        if: ${{ contains(github.event.comment.body, '/generate') }}
+        run: echo "Triggering OpenAPI generation process..."
+
+      - name: Checkout repository
+        if: ${{ contains(github.event.comment.body, '/generate') }}
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        if: ${{ contains(github.event.comment.body, '/generate') }}
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'adopt'
+          java-version: '17'
+
+      - name: Generate OpenAPI code
+        if: ${{ contains(github.event.comment.body, '/generate') }}
+        run: |
+          mvn clean install
+          mvn generate-sources
+
+      - name: Post comment success
+        if: ${{ contains(github.event.comment.body, '/generate') }}
+        run: |
+          curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -d '{"body":"OpenAPI code generation completed successfully."}' \
+          "${{ github.event.issue.url }}/comments"
