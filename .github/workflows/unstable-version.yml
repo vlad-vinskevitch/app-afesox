@@ -1,45 +1,17 @@
-name: OpenAPI Generator
+name: Trigger on /generate Comment
 
 on:
   issue_comment:
-    types:
-      - created
+    types: [created]  # Trigger when a new comment is created on an issue or pull request
 
 jobs:
-  check-comment:
+  log-comment:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Print Event Details
-        run: |
-          echo "Comment Body: ${{ github.event.comment.body }}"
-          echo "Triggered by: ${{ github.event.comment.user.login }}"
-          echo "Action: ${{ github.event.action }}"
+      - name: Log comment content
+        run: echo "Comment: ${{ github.event.comment.body }}"
 
-      - name: Check for `/generate` comment
-        if: ${{ contains(github.event.comment.body, '/generate') }}
-        run: echo "Triggering OpenAPI generation process..."
-
-      - name: Checkout repository
-        if: ${{ contains(github.event.comment.body, '/generate') }}
-        uses: actions/checkout@v3
-
-      - name: Set up JDK 17
-        if: ${{ contains(github.event.comment.body, '/generate') }}
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'adopt'
-          java-version: '17'
-
-      - name: Generate OpenAPI code
-        if: ${{ contains(github.event.comment.body, '/generate') }}
-        run: |
-          mvn clean install
-          mvn generate-sources
-
-      - name: Post comment success
-        if: ${{ contains(github.event.comment.body, '/generate') }}
-        run: |
-          curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          -d '{"body":"OpenAPI code generation completed successfully."}' \
-          "${{ github.event.issue.url }}/comments"
+      - name: Check for /generate in the comment
+        if: startsWith(github.event.comment.body, '/generate')
+        run: echo "The comment contains '/generate'. Workflow triggered successfully!"
