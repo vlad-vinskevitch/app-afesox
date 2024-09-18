@@ -2,7 +2,7 @@ name: Print Comment on /generate
 
 on:
   issue_comment:
-    types: [created]
+    types: [created]  # Trigger on creation of new comments
 
 jobs:
   log-comment:
