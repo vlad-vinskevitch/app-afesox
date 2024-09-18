@@ -10,7 +10,8 @@ jobs:
 
     steps:
       - name: Log comment content
-        run: echo "Comment: ${{ github.event.comment.body }}"
+        run: |
+          echo "Comment: ${{ github.event.comment.body }}"
 
       - name: Check for /generate in the comment
         if: startsWith(github.event.comment.body, '/generate')
