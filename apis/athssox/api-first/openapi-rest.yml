@@ -14,7 +14,7 @@ paths:
   /api/v2/user:
     post:
       summary: user
-      operationId: userOperation
+      operationId: createUsers
       tags:
         - User
       requestBody:
@@ -34,14 +34,14 @@ paths:
                 items:
                   $ref: '#/components/schemas/User'
         '400':
-          description: 	Bad Request
+          description: Bad Request
           content:
             text/plain:
               schema:
                 type: string
               example: 'Invalid request parameters, try again.'
         '500':
-        description:
+          description: Internal Server Error
           content:
             text/plain:
               schema:
