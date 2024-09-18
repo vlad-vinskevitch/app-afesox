@@ -1,8 +1,8 @@
-name: Trigger on /generate Comment
+name: Print Comment on /generate
 
 on:
   issue_comment:
-    types: [created]  # Trigger when a new comment is created on an issue or pull request
+    types: [created]
 
 jobs:
   log-comment:
@@ -10,8 +10,7 @@ jobs:
 
     steps:
       - name: Log comment content
-        run: |
-          echo "Comment: ${{ github.event.comment.body }}"
+        run: echo "Comment: ${{ github.event.comment.body }}"
 
       - name: Check for /generate in the comment
         if: startsWith(github.event.comment.body, '/generate')
