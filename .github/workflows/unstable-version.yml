@@ -1,20 +1,20 @@
-name: Print Comment on /generate
+name: Trigger on Comment
 
 on:
   issue_comment:
-    types:
-      - created  # List items should be on separate lines
+    types: [created]
 
 jobs:
-  log-comment:
+  trigger:
+    if: |
+      contains(github.event.comment.body, '/generate')
     runs-on: ubuntu-latest
-
     steps:
-      - name: Log comment content
-        run: |
-          echo "Comment: ${{ github.event.comment.body }}"
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Check for /generate in the comment
-        if: startsWith(github.event.comment.body, '/generate')
-        run: |
-          echo "The comment contains '/generate'. Workflow triggered successfully!"
+      - name: Trigger Another Workflow
+        uses: peter-evans/workflow-dispatch@v1
+        with:
+          workflow: 'other-workflow.yml'
+          ref: ${{ github.event.issue.pull_request.head.sha }}
