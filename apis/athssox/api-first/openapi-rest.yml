@@ -31,23 +31,11 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                items:
-                  $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/User'
         '400':
-          description: Bad Request
-          content:
-            text/plain:
-              example: 'Invalid request parameters, try again.'
-              schema:
-                type: string
+          $ref: '#/components/responses/BadRequest'
         '500':
-          description: Internal Server Error
-          content:
-            text/plain:
-              example: "An unexpected error occurred on the server."
-              schema:
-                type: string
+          $ref: '#/components/responses/InternalServerError'
 
 components:
   schemas:
@@ -63,3 +51,8 @@ components:
         password:
           type: string
           example: qwerty1234
+  responses:
+    BadRequest:
+      description: Bad Request
+    InternalServerError:
+      description: Internal Server Error
