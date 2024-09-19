@@ -30,7 +30,6 @@ paths:
           description: Success
           content:
             application/json:
-              example: 'Success'
               schema:
                 type: object
                 items:
