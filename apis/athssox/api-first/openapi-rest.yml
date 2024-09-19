@@ -11,8 +11,9 @@ servers:
 tags:
   - name: User
 paths:
-  /api/v2/user:
+  /api/v1/user:
     post:
+      description: Create user
       summary: user
       operationId: createUsers
       tags:
@@ -61,15 +62,6 @@ components:
         password:
           type: string
           format: password
-
-    Error:
-      type: object
-      required:
-        - code
-        - message
-      properties:
-        code:
-          type: integer
-          format: int32
-        message:
-          type: string
+      example:
+        username: Edvard
+        password: qwerty1234
