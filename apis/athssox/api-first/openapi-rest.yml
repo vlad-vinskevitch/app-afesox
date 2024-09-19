@@ -61,7 +61,5 @@ components:
       properties:
         username:
           type: string
-          format: string
         password:
           type: string
-          format: password
