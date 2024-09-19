@@ -62,11 +62,9 @@ components:
         username:
           type: string
           format: string
-          example: Edvard
         password:
           type: string
           format: password
-          example: qwerty1234
       example:
-        username: Edvard
-        password: qwerty1234
+        username: "Edvard"
+        password: "qwerty1234"
