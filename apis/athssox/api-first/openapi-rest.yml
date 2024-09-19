@@ -24,14 +24,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/User'
+              $ref: '#/components/schemas/UserDTO'
       responses:
         '200':
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/UserDTO'
         '400':
           $ref: '#/components/responses/BadRequest'
         '500':
@@ -39,7 +39,7 @@ paths:
 
 components:
   schemas:
-    User:
+    UserDTO:
       type: object
       required:
         - username
