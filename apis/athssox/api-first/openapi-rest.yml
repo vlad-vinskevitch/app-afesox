@@ -13,26 +13,24 @@ tags:
 paths:
   /api/v1/user:
     post:
-      description: Create user
-      summary: user
-      operationId: createUsers
+      description: Service that create user
+      summary: API for user creation
+      operationId: createUser
       tags:
         - User
       requestBody:
-        description: User name and password
+        description: User body
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/User'
-            example:
-              username: Edvard
-              password: qwerty1234
       responses:
         '200':
-          description: User
+          description: Success
           content:
             application/json:
+              example: 'Success'
               schema:
                 type: object
                 items:
@@ -41,16 +39,17 @@ paths:
           description: Bad Request
           content:
             text/plain:
+              example: 'Invalid request parameters, try again.'
               schema:
                 type: string
-              example: 'Invalid request parameters, try again.'
         '500':
           description: Internal Server Error
           content:
             text/plain:
+              example: "An unexpected error occurred on the server."
               schema:
                 type: string
-              example: "An unexpected error occurred on the server."
+
 components:
   schemas:
     User:
@@ -61,5 +60,7 @@ components:
       properties:
         username:
           type: string
+          example: Edvard
         password:
           type: string
+          example: qwerty1234
