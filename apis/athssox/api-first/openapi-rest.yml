@@ -65,6 +65,3 @@ components:
         password:
           type: string
           format: password
-      example:
-        username: "Edvard"
-        password: "qwerty1234"
