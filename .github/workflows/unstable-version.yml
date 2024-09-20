@@ -2,18 +2,18 @@ name: Trigger on "/generate" in PR Comment
 
 on:
   issue_comment:
-    types: [created]
+    types: [created, edited, deleted]
 
 jobs:
   check-comment:
     if: github.event.issue.pull_request != null  # Ensure it's a PR comment
     runs-on: ubuntu-latest
     steps:
-      - name: Check if the comment contains "/generate"
-        if: contains(github.event.comment.body, '/generate')
-        run: echo "The comment contains '/generate'. Running the next steps..."
+      - name: Check if the comment starts with "/generate"
+        if: startsWith(github.event.comment.body, '/generate')
+        run: echo "The comment starts with '/generate'. Running the next steps..."
 
-      # Add your steps here that should run when "/generate" is found
+      # Add your steps here that should run when "/generate" is found at the start of the comment
       - name: Run your script or action
-        if: contains(github.event.comment.body, '/generate')
+        if: startsWith(github.event.comment.body, '/generate')
         run: echo "This is where you would run your script or action."
