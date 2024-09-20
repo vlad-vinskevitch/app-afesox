@@ -1,27 +1,40 @@
-name: Trigger on "/generate" in Commit Message
+name: Trigger on "/generate" in PR
 
 on:
-  push:
-    branches:
-      - main
-      - develop
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
 
 jobs:
-  check-commit-message:
+  check-pr-message:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
         uses: actions/checkout@v3
 
-      - name: Get commit message
-        id: commit_message
-        run: echo "COMMIT_MESSAGE=$(git log -1 --pretty=%B)" >> $GITHUB_ENV
+      - name: Get PR title and description
+        id: pr_details
+        run: |
+          echo "PR_TITLE=${{ github.event.pull_request.title }}" >> $GITHUB_ENV
+          echo "PR_BODY=${{ github.event.pull_request.body }}" >> $GITHUB_ENV
 
-      - name: Check if the commit message contains "/generate"
-        if: contains(env.COMMIT_MESSAGE, '/generate')
-        run: echo "The commit message contains '/generate'. Running the next steps..."
+      - name: Get commit messages
+        id: commit_messages
+        run: echo "COMMIT_MESSAGES=$(git log --format=%B -n 10)" >> $GITHUB_ENV
+
+      - name: Check if PR contains "/generate"
+        if: |
+          contains(env.PR_TITLE, '/generate') || 
+          contains(env.PR_BODY, '/generate') || 
+          contains(env.COMMIT_MESSAGES, '/generate')
+        run: echo "The PR or its commits contain '/generate'. Running the next steps..."
 
       # Add your steps here that should run when "/generate" is found
       - name: Run your script or action
-        if: contains(env.COMMIT_MESSAGE, '/generate')
+        if: |
+          contains(env.PR_TITLE, '/generate') || 
+          contains(env.PR_BODY, '/generate') || 
+          contains(env.COMMIT_MESSAGES, '/generate')
         run: echo "This is where you would run your script or action."
