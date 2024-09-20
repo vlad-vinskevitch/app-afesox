@@ -13,7 +13,6 @@ jobs:
         if: startsWith(github.event.comment.body, '/generate')
         run: echo "The comment starts with '/generate'. Running the next steps..."
 
-      # Add your steps here that should run when "/generate" is found at the start of the comment
       - name: Run your script or action
         if: startsWith(github.event.comment.body, '/generate')
         run: echo "This is where you would run your script or action."
