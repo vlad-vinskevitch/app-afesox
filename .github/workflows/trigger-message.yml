@@ -78,9 +78,7 @@ jobs:
         id: extract-ticket-num
         run: |
           pr_title="${{ github.event.issue.title }}"
-          echo "Pull Request Title: $pr_title"
-          ticket_num=$(echo "$pr_title" | grep -oP '(?<=\[)[^]]*(?=\])')
-          echo "Extracted Ticket Number: $ticket_num"
+          ticket_num=$(echo "$pr_title" | grep -oP '(?<=\[)[^]]*(?=\])' | tr '[:upper:]' '[:lower:]')
           echo "::set-output name=ticket_num::$ticket_num"
 
       - name: Read metadata and find api-spec-type and definition-path
