@@ -78,6 +78,13 @@ jobs:
         id: extract-ticket-num
         run: |
           pr_title="${{ github.event.issue.title }}"
+          
+          # Check for the presence of brackets
+          if [[ ! "$pr_title" =~ \[.*\] ]]; then
+            echo "ERROR: Pull Request title must have the correct format [SITIONIX-*] description."
+            exit 1
+          fi
+
           ticket_num=$(echo "$pr_title" | grep -oP '(?<=\[)[^]]*(?=\])' | tr '[:upper:]' '[:lower:]')
           echo "::set-output name=ticket_num::$ticket_num"
 
