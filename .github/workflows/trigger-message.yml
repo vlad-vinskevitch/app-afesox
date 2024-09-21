@@ -118,25 +118,30 @@ jobs:
 
       - name: Remove Old Package by Name
         run: |
-          REPO_URL="https://your-nexus-url/service/rest/v1/components"
+          REPO_URL="https://your-nexus-url/service/rest/v1/search/assets"
           REPOSITORY="your-repository-name"
-          PACKAGE_NAME="com.afesox.$ARTIFACT_ID"
+          GROUP="com.afesox"
+          NAME="${ARTIFACT_ID}"
+          VERSION="${{ env.VERSION }}"
           USERNAME="${{ github.actor }}"
           PASSWORD="${{ secrets.APP_AFESOX }}"
           
-          echo $PACKAGE_NAME
+          echo "Searching for package: $GROUP.$NAME version $VERSION"
           
           # Search for the package
-          component_id=$(curl -s -u $USERNAME:$PASSWORD "$REPO_URL?repository=$REPOSITORY&name=$PACKAGE_NAME" | jq -r '.items[0].id')
+          response=$(curl -s -u $USERNAME:$PASSWORD "$REPO_URL?repository=$REPOSITORY&group=$GROUP&name=$NAME&version=$VERSION")
+          
+          component_id=$(echo $response | jq -r '.items[0].id')
           
           if [ -n "$component_id" ]; then
             echo "Found component ID: $component_id"
             # Delete the package
             curl -u $USERNAME:$PASSWORD -X DELETE "$REPO_URL/$component_id"
-            echo "Package $PACKAGE_NAME deleted successfully."
+            echo "Package $GROUP.$NAME version $VERSION deleted successfully."
           else
-            echo "Package $PACKAGE_NAME not found."
+            echo "Package $GROUP.$NAME version $VERSION not found."
           fi
+
 
 
 
