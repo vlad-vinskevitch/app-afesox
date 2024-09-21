@@ -2,3 +2,6 @@ apis:
   - name: API Authentication SOX
     api-spec-type: api-first
     definition-path: /athssox/api-first
+  - name: CLIENT Authentication SOX
+    api-spec-type: client
+    definition-path: /athssox/api-first

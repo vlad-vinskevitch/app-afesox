@@ -126,7 +126,7 @@ jobs:
       - name: Construct Maven Dependency String
         id: construct-dependency
         run: |
-          dependency_string="<dependency>\n  <groupId>com.example</groupId>\n  <artifactId>${{ env.ARTIFACT_ID }}</artifactId>\n  <version>${{ env.VERSION }}</version>\n</dependency>"
+          dependency_string="<dependency>\n  <groupId>com.afesox</groupId>\n  <artifactId>${{ env.ARTIFACT_ID }}</artifactId>\n  <version>${{ env.VERSION }}</version>\n</dependency>"
           echo "::set-output name=dependency_string::$dependency_string"
 
       - name: Post Maven Dependency as Comment
