@@ -6,7 +6,7 @@ on:
 
 jobs:
   generate-message:
-    if: ${{ github.event.issue.pull_request && github.event.comment.body == '/generate' }}
+    if: ${{ github.event.issue.pull_request && startsWith(github.event.comment.body, '/generate') }}
     runs-on: ubuntu-latest
     steps:
       - name: Post comment to PR
