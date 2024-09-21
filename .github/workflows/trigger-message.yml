@@ -41,7 +41,7 @@ jobs:
         run: |
           api_name="${{ steps.parse-command.outputs.api_name }}"
           echo "Looking for API name: $api_name"
-          api_spec_type=$(yq eval ".apis[] | select(.name == \"$api_name\") | .api-spec-type" metadata.yml)
+          api_spec_type=$(yq eval ".apis[] | select(.name == \"$api_name\") | .api-spec-type" apis/metadata.yml)
           echo "Found api-spec-type: $api_spec_type"
           echo "::set-output name=api_spec_type::$api_spec_type"
 
