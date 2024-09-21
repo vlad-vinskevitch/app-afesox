@@ -114,7 +114,7 @@ jobs:
 
       - name: Remove Existing Artifact
         run: |
-          mvn deploy:delete -DgroupId=com.afesox -DartifactId=app-afesox-${{ steps.read-definition-metadata.outputs.api_name }} -Dversion=${{ env.VERSION }} -Dpackaging=jar || exit 1
+          mvn org.apache.maven.plugins:maven-dependency-plugin:3.1.2:remove -DgroupId=com.afesox -DartifactId=app-afesox-${{ steps.read-definition-metadata.outputs.api_name }} -Dversion=${{ env.VERSION }} -Dpackaging=jar || exit 1
 
       - name: Deploy the New Version
         run: |
