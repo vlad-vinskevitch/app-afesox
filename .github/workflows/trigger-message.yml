@@ -112,16 +112,9 @@ jobs:
         run: |
           mvn clean package -P${{ env.API_SPEC_TYPE }} -Dproject.version=${{ env.VERSION }} -Dmaven.wagon.http.ssl.insecure=true || exit 1
 
-      - name: Remove Existing Artifact
-        env:
-          GITHUB_TOKEN: ${{ secrets.APP_AFESOX }}  # Ensure this secret is set
+      - name: Deploy the Project
         run: |
-          ARTIFACT_URL="https://maven.pkg.github.com/vlad-vinskevitch/app-afesox/com/afesox/app-afesox-${{ steps.read-definition-metadata.outputs.api_name }}-${{ steps.find-api-spec.outputs.api_spec_type }}-${{ steps.parse-command.outputs.suffix }}-unstable-${{ env.VERSION }}.jar"
-          curl -X DELETE -H "Authorization: token $GITHUB_TOKEN" "$ARTIFACT_URL" || exit 0  # exit 0 to ignore error if artifact doesn't exist
-
-      - name: Deploy the New Version
-        run: |
-          mvn deploy -P${{ env.API_SPEC_TYPE }} -Dproject.version=${{ env.VERSION }} -Dpackage=${{ env.ARTIFACT_ID }} || exit 1
+          mvn clean deploy -P${{ env.API_SPEC_TYPE }} -Dproject.version=${{ env.VERSION }} -Dpackage=${{ env.ARTIFACT_ID }} -DskipTests=true -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/vlad-vinskevitch/app-afesox || exit 1
 
 #      - name: Construct Maven Dependency String
 #        id: construct-dependency
