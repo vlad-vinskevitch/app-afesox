@@ -33,6 +33,40 @@ jobs:
               body: comment_body,
             });
 
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Cache Maven packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Verify GitHub Token Access
+        run: |
+          if [ -z "${{ secrets.APP_AFESOX }}" ]; then
+            echo "ERROR: Secret APP_AFESOX is not set or not accessible."
+            exit 1
+          fi
+
+      - name: Setup Maven settings
+        run: |
+          mkdir -p ~/.m2
+          echo "<settings>
+                  <servers>
+                    <server>
+                      <id>github</id>
+                      <username>${{ github.actor }}</username>
+                      <password>${{ secrets.APP_AFESOX }}</password>
+                    </server>
+                  </servers>
+                </settings>" > ~/.m2/settings.xml
+
       - name: Parse command and extract name
         id: parse-command
         run: |
@@ -48,6 +82,4 @@ jobs:
           echo "Found api-spec-type: $api_spec_type"
           echo "::set-output name=api_spec_type::$api_spec_type"
 
-      - name: Print api-spec-type
-        run: |
-          echo "API Spec Type: ${{ steps.find-api-spec.outputs.api_spec_type }}"
+      # Last step removed
