@@ -112,16 +112,31 @@ jobs:
         run: |
           mvn clean package -P${{ env.API_SPEC_TYPE }} -Dproject.version=${{ env.VERSION }} -Dmaven.wagon.http.ssl.insecure=true || exit 1
 
-      - name: Remove Old Package
+      - name: Package the Project
         run: |
-          ARTIFACT_ID="app-afesox-${{ steps.read-definition-metadata.outputs.api_name }}-${{ steps.find-api-spec.outputs.api_spec_type }}-${{ steps.parse-command.outputs.suffix }}-unstable"
-          REPO_URL="https://github.com/vlad-vinskevitch/app-afesox"
+          mvn clean package -P${{ env.API_SPEC_TYPE }} -Dproject.version=${{ env.VERSION }} -Dmaven.wagon.http.ssl.insecure=true || exit 1
+
+      - name: Remove Old Package by Name
+        run: |
+          REPO_URL="https://your-nexus-url/service/rest/v1/components"
+          REPOSITORY="your-repository-name"
+          PACKAGE_NAME="com.afesox.$ARTIFACT_ID"
           USERNAME="${{ github.actor }}"
           PASSWORD="${{ secrets.APP_AFESOX }}"
           
-          echo "Removing artifact with ID: $ARTIFACT_ID"
-          curl -u $USERNAME:$PASSWORD -X DELETE "$REPO_URL/path/to/your/artifacts/$ARTIFACT_ID"
-
+          echo $PACKAGE_NAME
+          
+          # Search for the package
+          component_id=$(curl -s -u $USERNAME:$PASSWORD "$REPO_URL?repository=$REPOSITORY&name=$PACKAGE_NAME" | jq -r '.items[0].id')
+          
+          if [ -n "$component_id" ]; then
+            echo "Found component ID: $component_id"
+            # Delete the package
+            curl -u $USERNAME:$PASSWORD -X DELETE "$REPO_URL/$component_id"
+            echo "Package $PACKAGE_NAME deleted successfully."
+          else
+            echo "Package $PACKAGE_NAME not found."
+          fi
 
 
 
