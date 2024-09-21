@@ -23,7 +23,6 @@ jobs:
             const workflow_run_url = `https://github.com/${repo.owner}/${repo.repo}/actions/runs/${run_id}`;
             
             const comment_body = `
-            ![Workflow Image](https://github.com/vlad-vinskevitch/app-afesox/blob/develop/img/reference.png)
             ### Workflow Execution Started
             - **Job Status:** In Progress
             - **[View Workflow Run](${workflow_run_url})**
