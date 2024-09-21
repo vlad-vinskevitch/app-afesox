@@ -112,13 +112,9 @@ jobs:
         run: |
           mvn clean package -P${{ env.API_SPEC_TYPE }} -Dproject.version=${{ env.VERSION }} -Dmaven.wagon.http.ssl.insecure=true || exit 1
 
-      - name: Package the Project
-        run: |
-          mvn clean package -P${{ env.API_SPEC_TYPE }} -Dproject.version=${{ env.VERSION }} -Dmaven.wagon.http.ssl.insecure=true || exit 1
-
       - name: Remove Old Package by Name
         run: |
-          REPO_URL="https://your-nexus-url/service/rest/v1/search/assets"
+          REPO_URL="https://nexus.example.com/service/rest/v1/search/assets"
           REPOSITORY="your-repository-name"
           GROUP="com.afesox"
           NAME="${ARTIFACT_ID}"
@@ -141,8 +137,6 @@ jobs:
           else
             echo "Package $GROUP.$NAME version $VERSION not found."
           fi
-
-
 
 
 #      - name: Construct Maven Dependency String
