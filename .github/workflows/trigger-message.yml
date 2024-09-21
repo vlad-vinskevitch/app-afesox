@@ -117,17 +117,24 @@ jobs:
           artifact_id="${{ env.ARTIFACT_ID }}"
           version="${{ env.VERSION }}"
           repo="vlad-vinskevitch/app-afesox"
-          url="https://maven.pkg.github.com/${repo}/com/afesox/${artifact_id}/${version}/${artifact_id}-${version}.jar"
-          
-          # Use curl to delete the existing artifact if it exists
-          response=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "$url")
-          if [ "$response" -eq 204 ]; then
-            echo "Existing artifact removed."
-          elif [ "$response" -eq 404 ]; then
-            echo "No existing artifact to remove."
+          package_name="app-afesox-${artifact_id}" # Adjust based on your package naming
+
+          # Get the list of package versions
+          existing_versions=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/orgs/$repo/packages?package_type=maven")
+
+          # Check if the specific version exists
+          if echo "$existing_versions" | grep -q "$version"; then
+            echo "Removing existing artifact version: $version"
+            delete_response=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/orgs/$repo/packages/maven/$package_name/versions/$version")
+            if [ "$delete_response" -eq 204 ]; then
+              echo "Existing artifact removed."
+            else
+              echo "Failed to remove existing artifact. HTTP status: $delete_response"
+            fi
           else
-            echo "Failed to remove existing artifact. HTTP status: $response"
+            echo "No existing artifact to remove."
           fi
+
 
 
 #      - name: Construct Maven Dependency String
