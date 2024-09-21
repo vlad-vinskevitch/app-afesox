@@ -1,0 +1,4 @@
+apis:
+  - name: API Authentication SOX
+    api-spec-type: api-first
+    definition-path: /athssox/api-first
