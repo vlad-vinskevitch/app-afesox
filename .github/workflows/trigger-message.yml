@@ -12,28 +12,42 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Post initial comment with workflow link
+        id: post-initial-comment
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue_number = context.issue.number;
+            const run_id = process.env.GITHUB_RUN_ID;
+            const repo = context.repo;
+            const workflow_run_url = `https://github.com/${repo.owner}/${repo.repo}/actions/runs/${run_id}`;
+            
+            const comment_body = `
+            ### Workflow Execution Started
+            - **Job Status:** In Progress
+            - **[View Workflow Run](${workflow_run_url})**
+            `;
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: issue_number,
+              body: comment_body,
+            });
+
       - name: Parse command and extract name
         id: parse-command
         run: |
           echo "Comment: ${{ github.event.comment.body }}"
           echo "::set-output name=api_name::$(echo '${{ github.event.comment.body }}' | grep -oP '(?<=--name ")[^"]*')"
 
-      - name: List current directory
-        run: |
-          echo "Listing contents of the current directory:"
-          ls -la
-          echo "Listing contents of the apis directory:"
-          ls -la ./apis
-
-      - name: Read metadata and find api-spec-type
-        id: find-api-spec
+      - name: Read metadata and find definition-path
+        id: find-definition-path
         run: |
           api_name="${{ steps.parse-command.outputs.api_name }}"
           echo "Looking for API name: $api_name"
-          api_spec_type=$(yq eval ".apis[] | select(.name == \"$api_name\") | .api-spec-type" ./apis/metadata.yml)
-          echo "Found api-spec-type: $api_spec_type"
-          echo "::set-output name=api_spec_type::$api_spec_type"
+          definition-path=$(yq eval ".apis[] | select(.name == \"$api_name\") | .definition-path" ./apis/metadata.yml)
+          echo "Found definition-path: $definition-path"
+          echo "::set-output name=definition-path::$definition-path"
 
       - name: Print api-spec-type
         run: |
-          echo "API Spec Type: ${{ steps.find-api-spec.outputs.api_spec_type }}"
+          echo "API Spec Type: ${{ steps.find-api-spec.outputs.definition-path }}"
