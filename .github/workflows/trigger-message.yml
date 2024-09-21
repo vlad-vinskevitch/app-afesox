@@ -118,15 +118,26 @@ jobs:
           version="${{ env.VERSION }}"
           repo="vlad-vinskevitch/app-afesox"
           package_name="com.afesox.${artifact_id}" # Adjust based on your package naming
+
+          # Get the list of packages and find the package ID
+          package_info=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/orgs/$repo/packages?package_type=maven")
           
-          echo $package_name
-          # Get the list of package versions
-          existing_versions=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/orgs/$repo/packages?package_type=maven")
+          package_id=$(echo "$package_info" | jq -r ".[] | select(.name == \"$package_name\") | .id")
+
+          if [ "$package_id" == "null" ]; then
+            echo "Package not found: $package_name"
+            exit 0
+          fi
+
+          echo "Found package ID: $package_id"
+
+          # Get the versions for the specific package
+          existing_versions=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/orgs/$repo/packages/maven/$package_id/versions")
 
           # Check if the specific version exists
-          if echo "$existing_versions" | grep -q "$version"; then
+          if echo "$existing_versions" | jq -e ".[] | select(.name == \"$version\")" > /dev/null; then
             echo "Removing existing artifact version: $version"
-            delete_response=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/orgs/$repo/packages/maven/$package_name/versions/$version")
+            delete_response=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/orgs/$repo/packages/maven/$package_id/versions/$version")
             if [ "$delete_response" -eq 204 ]; then
               echo "Existing artifact removed."
             else
@@ -135,6 +146,7 @@ jobs:
           else
             echo "No existing artifact to remove."
           fi
+
 
 
 
