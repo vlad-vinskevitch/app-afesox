@@ -114,11 +114,10 @@ jobs:
 
       - name: Remove Package
         run: |
-          gh api \
-            --method DELETE \
+          curl -X DELETE -H "Authorization: token ${{ secrets.APP_AFESOX }}" \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            /user/packages/maven/com.afesox.$ARTIFACT_ID
+            "https://api.github.com/user/packages/maven/com.afesox.$ARTIFACT_ID"
 
       - name: Deploy the Project
         run: |
