@@ -9,12 +9,18 @@ jobs:
     if: ${{ github.event.issue.pull_request && github.event.comment.body == '/print-message' }}
     runs-on: ubuntu-latest
     steps:
-
-      - name: Install GitHub CLI
-        run: sudo apt-get install gh
-
-      - name: Post message back to PR
-        run: |
-          gh pr comment ${{ github.event.issue.number }} --body "This is a message from the action. The message: 'This is a custom message triggered by the '/print-message' comment.'"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Post comment to PR
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue_number = context.issue.number;
+            const comment_body = `
+            ### Workflow Execution
+            - **Message:** This is a custom message triggered by the '/print-message' comment.
+            - **Job Status:** Success
+            `;
+            github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: issue_number,
+              body: comment_body,
+            });
