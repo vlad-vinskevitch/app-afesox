@@ -112,31 +112,13 @@ jobs:
         run: |
           mvn clean package -P${{ env.API_SPEC_TYPE }} -Dproject.version=${{ env.VERSION }} -Dmaven.wagon.http.ssl.insecure=true || exit 1
 
-      - name: Remove Old Package by Name
+      - name: Deploy the Project
         run: |
-          REPO_URL="https://nexus.example.com/service/rest/v1/search/assets"
-          REPOSITORY="your-repository-name"
-          GROUP="com.afesox"
-          NAME="${ARTIFACT_ID}"
-          VERSION="${{ env.VERSION }}"
-          USERNAME="${{ github.actor }}"
-          PASSWORD="${{ secrets.APP_AFESOX }}"
-          
-          echo "Searching for package: $GROUP.$NAME version $VERSION"
-          
-          # Search for the package
-          response=$(curl -s -u $USERNAME:$PASSWORD "$REPO_URL?repository=$REPOSITORY&group=$GROUP&name=$NAME&version=$VERSION")
-          
-          component_id=$(echo $response | jq -r '.items[0].id')
-          
-          if [ -n "$component_id" ]; then
-            echo "Found component ID: $component_id"
-            # Delete the package
-            curl -u $USERNAME:$PASSWORD -X DELETE "$REPO_URL/$component_id"
-            echo "Package $GROUP.$NAME version $VERSION deleted successfully."
-          else
-            echo "Package $GROUP.$NAME version $VERSION not found."
-          fi
+          mvn clean deploy \
+          -DskipTests \
+          -Dproject.version=${{ env.VERSION }} \
+          -DartifactId=${{ env.ARTIFACT_ID }}
+
 
 
 #      - name: Construct Maven Dependency String
