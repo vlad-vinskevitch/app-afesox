@@ -115,3 +115,31 @@ jobs:
       - name: Deploy the Project
         run: |
           mvn deploy -P${{ env.API_SPEC_TYPE }} -Dproject.version=${{ env.VERSION }} -Dpackage=${{ env.ARTIFACT_ID }} || exit 1
+
+      - name: Construct Maven Dependency String
+        id: construct-dependency
+        run: |
+          echo "Maven Dependency: <dependency>" >> dependency.txt
+          echo "  <groupId>com.example</groupId>" >> dependency.txt
+          echo "  <artifactId>${{ env.ARTIFACT_ID }}</artifactId>" >> dependency.txt
+          echo "  <version>${{ env.VERSION }}</version>" >> dependency.txt
+          echo "</dependency>" >> dependency.txt
+          echo "::set-output name=dependency_string::$(cat dependency.txt)"
+
+      - name: Post Maven Dependency as Comment
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue_number = context.issue.number;
+            const dependency_string = '${{ steps.construct-dependency.outputs.dependency_string }}';
+            const comment_body = `
+            ### Maven Dependency
+            \`\`\`xml
+            ${dependency_string}
+            \`\`\`
+            `;
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: issue_number,
+              body: comment_body,
+            });
