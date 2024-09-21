@@ -112,9 +112,13 @@ jobs:
         run: |
           mvn clean package -P${{ env.API_SPEC_TYPE }} -Dproject.version=${{ env.VERSION }} -Dmaven.wagon.http.ssl.insecure=true || exit 1
 
-      - name: Deploy the Project
+      - name: Remove Existing Artifact
         run: |
-          mvn deploy -P${{ env.API_SPEC_TYPE }} -Dproject.version=${{ env.VERSION }} -Dpackage=${{ env.ARTIFACT_ID }} -DskipExistingVersions=true || exit 1
+          mvn deploy:delete -DgroupId=com.afesox -DartifactId=app-afesox-${{ steps.read-definition-metadata.outputs.api_name }} -Dversion=${{ env.VERSION }} -Dpackaging=jar || exit 1
+
+      - name: Deploy the New Version
+        run: |
+          mvn deploy -P${{ env.API_SPEC_TYPE }} -Dproject.version=${{ env.VERSION }} -Dpackage=${{ env.ARTIFACT_ID }} || exit 1
 
 #      - name: Construct Maven Dependency String
 #        id: construct-dependency
