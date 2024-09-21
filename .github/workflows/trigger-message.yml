@@ -67,19 +67,33 @@ jobs:
                   </servers>
                 </settings>" > ~/.m2/settings.xml
 
-      - name: Parse command and extract name
+      - name: Parse command and extract name and suffix
         id: parse-command
         run: |
           echo "Comment: ${{ github.event.comment.body }}"
-          echo "::set-output name=api_name::$(echo '${{ github.event.comment.body }}' | grep -oP '(?<=--name ")[^"]*')"
+          api_name=$(echo '${{ github.event.comment.body }}' | grep -oP '(?<=--name ")[^"]*')
+          suffix=$(echo '${{ github.event.comment.body }}' | grep -oP '(?<=--suffix ")[^"]*')
+          echo "::set-output name=api_name::$api_name"
+          echo "::set-output name=suffix::$suffix"
 
-      - name: Read metadata and find api-spec-type
+      - name: Read metadata and find api-spec-type and definition-path
         id: find-api-spec
         run: |
           api_name="${{ steps.parse-command.outputs.api_name }}"
           echo "Looking for API name: $api_name"
           api_spec_type=$(yq eval ".apis[] | select(.name == \"$api_name\") | .api-spec-type" ./apis/metadata.yml)
+          definition_path=$(yq eval ".apis[] | select(.name == \"$api_name\") | .definition-path" ./apis/metadata.yml)
           echo "Found api-spec-type: $api_spec_type"
+          echo "Found definition-path: $definition_path"
           echo "::set-output name=api_spec_type::$api_spec_type"
+          echo "::set-output name=definition_path::$definition_path"
 
-      # Last step removed
+      - name: Print details
+        run: |
+          suffix="${{ steps.parse-command.outputs.suffix }}"
+          api_spec_type="${{ steps.find-api-spec.outputs.api_spec_type }}"
+          definition_path="${{ steps.find-api-spec.outputs.definition_path }}"
+          
+          echo "Suffix: $suffix"
+          echo "API Spec Type: $api_spec_type"
+          echo "Definition Path: $definition_path"
