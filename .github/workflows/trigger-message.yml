@@ -112,7 +112,7 @@ jobs:
         run: |
           echo "VERSION=${{ steps.read-definition-metadata.outputs.api_version }}" >> $GITHUB_ENV
           echo "NAME=${{ steps.read-definition-metadata.outputs.api_name }}" >> $GITHUB_ENV
-          echo "ARTIFACT_ID=app-afesox-${{ steps.read-definition-metadata.outputs.api_name }}-${{ steps.find-api-spec.outputs.api_spec_type }}-${{ steps.parse-command.outputs.suffix }}-unstable" >> $GITHUB_ENV
+          echo "ARTIFACT_ID=app-afesox-${{ steps.read-definition-metadata.outputs.api_name }}-${{ steps.find-api-spec.outputs.api_spec_type }}-$ticket_num-unstable" >> $GITHUB_ENV
           echo "API_SPEC_TYPE=${{ steps.find-api-spec.outputs.api_spec_type }}" >> $GITHUB_ENV
 
       - name: Package the Project
