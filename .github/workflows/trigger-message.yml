@@ -39,13 +39,6 @@ jobs:
           echo "Comment: ${{ github.event.comment.body }}"
           echo "::set-output name=api_name::$(echo '${{ github.event.comment.body }}' | grep -oP '(?<=--name ")[^"]*')"
 
-      - name: List current directory
-        run: |
-          echo "Listing contents of the current directory:"
-          ls -la
-          echo "Listing contents of the apis directory:"
-          ls -la ./apis
-
       - name: Read metadata and find api-spec-type
         id: find-api-spec
         run: |
