@@ -2,7 +2,7 @@ name: Generate Message on Comment
 
 on:
   issue_comment:
-    types: [created]
+    types: [ created ]
 
 jobs:
   print-message:
@@ -119,12 +119,8 @@ jobs:
       - name: Construct Maven Dependency String
         id: construct-dependency
         run: |
-          echo "Maven Dependency: <dependency>" >> dependency.txt
-          echo "  <groupId>com.example</groupId>" >> dependency.txt
-          echo "  <artifactId>${{ env.ARTIFACT_ID }}</artifactId>" >> dependency.txt
-          echo "  <version>${{ env.VERSION }}</version>" >> dependency.txt
-          echo "</dependency>" >> dependency.txt
-          echo "::set-output name=dependency_string::$(cat dependency.txt)"
+          dependency_string="<dependency>\n  <groupId>com.example</groupId>\n  <artifactId>${{ env.ARTIFACT_ID }}</artifactId>\n  <version>${{ env.VERSION }}</version>\n</dependency>"
+          echo "::set-output name=dependency_string::$dependency_string"
 
       - name: Post Maven Dependency as Comment
         uses: actions/github-script@v6
