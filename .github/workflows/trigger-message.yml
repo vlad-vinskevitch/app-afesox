@@ -115,7 +115,7 @@ jobs:
       - name: Remove Old Package
         run: |
           ARTIFACT_ID="app-afesox-${{ steps.read-definition-metadata.outputs.api_name }}-${{ steps.find-api-spec.outputs.api_spec_type }}-${{ steps.parse-command.outputs.suffix }}-unstable"
-          REPO_URL="https://your-repo-url"  # Update with your repository URL
+          REPO_URL="https://github.com/vlad-vinskevitch/app-afesox"
           USERNAME="${{ github.actor }}"
           PASSWORD="${{ secrets.APP_AFESOX }}"
           
