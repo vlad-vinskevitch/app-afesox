@@ -112,9 +112,18 @@ jobs:
         run: |
           mvn clean package -P${{ env.API_SPEC_TYPE }} -Dproject.version=${{ env.VERSION }} -Dmaven.wagon.http.ssl.insecure=true || exit 1
 
-      - name: Deploy the Project
+      - name: Check for existing artifact and remove if necessary
         run: |
-          mvn clean deploy -P${{ env.API_SPEC_TYPE }} -Dproject.version=${{ env.VERSION }} -Dpackage=${{ env.ARTIFACT_ID }} -DskipTests=true -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/vlad-vinskevitch/app-afesox || exit 1
+          existing_artifact="path/to/existing/artifact/${{ env.ARTIFACT_ID }}.jar" # Change this path as necessary
+          if [ -f "$existing_artifact" ]; then
+            echo "Removing existing artifact: $existing_artifact"
+            rm "$existing_artifact"
+          fi
+
+      - name: Deploy the Artifact
+        run: |
+          mvn deploy -Dproject.version=${{ env.VERSION }} -DskipTests=true || exit 1
+
 
 #      - name: Construct Maven Dependency String
 #        id: construct-dependency
