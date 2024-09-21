@@ -112,44 +112,15 @@ jobs:
         run: |
           mvn clean package -P${{ env.API_SPEC_TYPE }} -Dproject.version=${{ env.VERSION }} -Dmaven.wagon.http.ssl.insecure=true || exit 1
 
-      - name: Remove package version by artifact ID
+      - name: Remove Old Package
         run: |
-          artifact_id="${{ env.ARTIFACT_ID }}"
-          version="${{ env.VERSION }}"
-          repo="vlad-vinskevitch/app-afesox"
-          package_name="com.afesox.${artifact_id}"  # Adjust based on your package naming
-
-          echo "Attempting to remove package version for artifact ID: $artifact_id"
-
-          # Get the list of packages
-          package_info=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/orgs/$repo/packages?package_type=maven")
+          ARTIFACT_ID="app-afesox-${{ steps.read-definition-metadata.outputs.api_name }}-${{ steps.find-api-spec.outputs.api_spec_type }}-${{ steps.parse-command.outputs.suffix }}-unstable"
+          REPO_URL="https://your-repo-url"  # Update with your repository URL
+          USERNAME="${{ github.actor }}"
+          PASSWORD="${{ secrets.APP_AFESOX }}"
           
-          # Find the package ID using the package name
-          package_id=$(echo "$package_info" | jq -r ".[] | select(.name == \"$package_name\") | .id")
-
-          if [ "$package_id" == "null" ]; then
-            echo "Package not found: $package_name"
-            exit 0
-          fi
-
-          echo "Found package ID: $package_id"
-
-          # Get the versions for the specific package
-          existing_versions=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/orgs/$repo/packages/maven/$package_id/versions")
-
-          # Check if the specific version exists
-          if echo "$existing_versions" | jq -e ".[] | select(.name == \"$version\")" > /dev/null; then
-            echo "Removing existing artifact version: $version"
-            delete_response=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/orgs/$repo/packages/maven/$package_id/versions/$version")
-            if [ "$delete_response" -eq 204 ]; then
-              echo "Existing artifact removed successfully."
-            else
-              echo "Failed to remove existing artifact. HTTP status: $delete_response"
-            fi
-          else
-            echo "No existing artifact version found to remove."
-          fi
-
+          echo "Removing artifact with ID: $ARTIFACT_ID"
+          curl -u $USERNAME:$PASSWORD -X DELETE "$REPO_URL/path/to/your/artifacts/$ARTIFACT_ID"
 
 
 
