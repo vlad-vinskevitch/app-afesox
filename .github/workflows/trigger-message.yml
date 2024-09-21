@@ -113,8 +113,11 @@ jobs:
           mvn clean package -P${{ env.API_SPEC_TYPE }} -Dproject.version=${{ env.VERSION }} -Dmaven.wagon.http.ssl.insecure=true || exit 1
 
       - name: Remove Existing Artifact
+        env:
+          GITHUB_TOKEN: ${{ secrets.APP_AFESOX }}  # Make sure this is set up
         run: |
-          mvn org.apache.maven.plugins:maven-dependency-plugin:3.1.2:remove -DgroupId=com.afesox -DartifactId=app-afesox-${{ steps.read-definition-metadata.outputs.api_name }} -Dversion=${{ env.VERSION }} -Dpackaging=jar || exit 1
+          curl -X DELETE -H "Authorization: token $GITHUB_TOKEN" \
+          "https://maven.pkg.github.com/vlad-vinskevitch/app-afesox/com/afesox/app-afesox-${{ steps.read-definition-metadata.outputs.api_name }}/${{ env.VERSION }}/app-afesox-${{ steps.read-definition-metadata.outputs.api_name }}-${{ steps.find-api-spec.outputs.api_spec_type }}-${{ steps.parse-command.outputs.suffix }}-unstable-${{ env.VERSION }}.jar" || exit 1
 
       - name: Deploy the New Version
         run: |
