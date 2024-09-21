@@ -88,12 +88,29 @@ jobs:
           echo "::set-output name=api_spec_type::$api_spec_type"
           echo "::set-output name=definition_path::$definition_path"
 
+      - name: Read additional metadata from definition-path
+        id: read-definition-metadata
+        run: |
+          definition_path="${{ steps.find-api-spec.outputs.definition_path }}"
+          metadata_file="./apis/${definition_path}/metadata.yml"
+          version=$(yq eval '.api.version' $metadata_file)
+          name=$(yq eval '.api.name' $metadata_file)
+
+          echo "Found version: $version"
+          echo "Found name: $name"
+          echo "::set-output name=api_version::$version"
+          echo "::set-output name=api_name::$name"
+
       - name: Print details
         run: |
           suffix="${{ steps.parse-command.outputs.suffix }}"
           api_spec_type="${{ steps.find-api-spec.outputs.api_spec_type }}"
           definition_path="${{ steps.find-api-spec.outputs.definition_path }}"
+          api_version="${{ steps.read-definition-metadata.outputs.api_version }}"
+          api_name="${{ steps.read-definition-metadata.outputs.api_name }}"
           
           echo "Suffix: $suffix"
           echo "API Spec Type: $api_spec_type"
           echo "Definition Path: $definition_path"
+          echo "API Version: $api_version"
+          echo "API Name: $api_name"
