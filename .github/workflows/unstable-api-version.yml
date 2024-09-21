@@ -1,20 +1,16 @@
-name: pull request comment
+name: Print Message on Comment
 
 on:
   issue_comment:
-    types: [created, edited, deleted]
+    types: [created]
 
 jobs:
-  job01:
-    if: contains(github.event.comment.html_url, '/pull/')  # Check if the comment is from a pull request, exclude those from an issue.
+  print-message:
+    if: ${{ github.event.issue.pull_request && github.event.comment.body == '/print-message' }}
     runs-on: ubuntu-latest
     steps:
-      - name: say hello
-        if: contains(github.event.comment.body, '/support')  # Check if the comment contains the keyword "/support"
+      - name: Print to stacktrace
         run: |
-          echo "say hello"
-
-      - name: test
-        if: contains(github.event.comment.body, '/test')  # Check if the comment contains the keyword "/test"
-        run: |
-          echo "test"
+          echo "===== Printing to stacktrace ====="
+          echo "This is a custom message triggered by the '/print-message' comment."
+          echo "===== End of stacktrace ====="
