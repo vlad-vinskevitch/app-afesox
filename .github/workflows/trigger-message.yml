@@ -9,8 +9,13 @@ jobs:
     if: ${{ github.event.issue.pull_request && github.event.comment.body == '/print-message' }}
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout PR code
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
       - name: Print to stacktrace
         run: |
-          echo "===== Printing to stacktrace qqqqqq ====="
+          echo "===== Printing to stacktrace ====="
           echo "This is a custom message triggered by the '/print-message' comment."
           echo "===== End of stacktrace ====="
