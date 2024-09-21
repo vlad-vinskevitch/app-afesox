@@ -30,9 +30,21 @@ jobs:
               body: initial_comment_body,
             });
 
-      # Add other steps here
-      - name: Perform some task
-        run: echo "Doing some work..."
+      - name: Parse command and extract name
+        id: parse-command
+        run: |
+          echo "Comment: ${{ github.event.comment.body }}"
+          echo "::set-output name=api_name::$(echo '${{ github.event.comment.body }}' | grep -oP '(?<=--name ")[^"]*')"
 
-      - name: Post completion comment
-        run: echo "Workflow completed."
+      - name: Read metadata and find api-spec-type
+        id: find-api-spec
+        run: |
+          api_name="${{ steps.parse-command.outputs.api_name }}"
+          echo "Looking for API name: $api_name"
+          api_spec_type=$(yq eval ".apis[] | select(.name == \"$api_name\") | .api-spec-type" metadata.yml)
+          echo "Found api-spec-type: $api_spec_type"
+          echo "::set-output name=api_spec_type::$api_spec_type"
+
+      - name: Print api-spec-type
+        run: |
+          echo "API Spec Type: ${{ steps.find-api-spec.outputs.api_spec_type }}"
