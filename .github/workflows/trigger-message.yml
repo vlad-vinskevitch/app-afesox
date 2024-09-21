@@ -108,12 +108,10 @@ jobs:
           echo "ARTIFACT_ID=app-afesox-${{ steps.read-definition-metadata.outputs.api_name }}-${{ steps.parse-command.outputs.suffix }}-unstable" >> $GITHUB_ENV
           echo "API_SPEC_TYPE=${{ steps.find-api-spec.outputs.api_spec_type }}" >> $GITHUB_ENV
 
-      - name: Run Maven Build
+      - name: Package the Project
         run: |
-          mvn clean package -P${API_SPEC_TYPE} -Dproject.version=${VERSION} || exit 1
+          mvn clean package -P${{ env.API_SPEC_TYPE }} -Dproject.version=${{ env.VERSION }} || exit 1
 
-      - name: Print details
+      - name: Deploy the Project
         run: |
-          echo "API Version: $VERSION"
-          echo "API Name: $NAME"
-          echo "Artifact ID: $ARTIFACT_ID"
+          mvn deploy -P${{ env.API_SPEC_TYPE }} -Dproject.version=${{ env.VERSION }} -Dpackage=${{ env.ARTIFACT_ID }} || exit 1
