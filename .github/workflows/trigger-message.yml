@@ -114,15 +114,20 @@ jobs:
 
       - name: Check for existing artifact and remove if necessary
         run: |
-          existing_artifact="path/to/existing/artifact/${{ env.ARTIFACT_ID }}.jar" # Change this path as necessary
-          if [ -f "$existing_artifact" ]; then
-            echo "Removing existing artifact: $existing_artifact"
-            rm "$existing_artifact"
+          artifact_id="${{ env.ARTIFACT_ID }}"
+          version="${{ env.VERSION }}"
+          repo="vlad-vinskevitch/app-afesox"
+          url="https://maven.pkg.github.com/${repo}/com/afesox/${artifact_id}/${version}/${artifact_id}-${version}.jar"
+          
+          # Use curl to delete the existing artifact if it exists
+          response=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "$url")
+          if [ "$response" -eq 204 ]; then
+            echo "Existing artifact removed."
+          elif [ "$response" -eq 404 ]; then
+            echo "No existing artifact to remove."
+          else
+            echo "Failed to remove existing artifact. HTTP status: $response"
           fi
-
-      - name: Deploy the Artifact
-        run: |
-          mvn deploy -Dproject.version=${{ env.VERSION }} -DskipTests=true || exit 1
 
 
 #      - name: Construct Maven Dependency String
