@@ -1,0 +1,31 @@
+name: Print Message on Comment
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  print-message:
+    if: ${{ github.event.issue.pull_request && github.event.comment.body == '/print-message' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post comment to PR
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue_number = context.issue.number;
+            const run_id = process.env.GITHUB_RUN_ID;
+            const repo = context.repo;
+            const workflow_run_url = `https://github.com/${repo.owner}/${repo.repo}/actions/runs/${run_id}`;
+            
+            const comment_body = `
+            ### Workflow Execution
+            - **Message:** This is a custom message triggered by the '/print-message' comment.
+            - **Job Status:** Success
+            - **[View Workflow Run](${workflow_run_url})**
+            `;
+            github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: issue_number,
+              body: comment_body,
+            });
