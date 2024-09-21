@@ -117,7 +117,7 @@ jobs:
           artifact_id="${{ env.ARTIFACT_ID }}"
           version="${{ env.VERSION }}"
           repo="vlad-vinskevitch/app-afesox"
-          package_name="app-afesox-${artifact_id}" # Adjust based on your package naming
+          package_name="com.afesox.app-afesox-${artifact_id}" # Adjust based on your package naming
 
           # Get the list of package versions
           existing_versions=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/orgs/$repo/packages?package_type=maven")
