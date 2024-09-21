@@ -2,7 +2,7 @@ name: Generate Message on Comment
 
 on:
   issue_comment:
-    types: [ created ]
+    types: [created]
 
 jobs:
   print-message:
@@ -138,4 +138,20 @@ jobs:
               ...context.repo,
               issue_number: issue_number,
               body: comment_body,
+            });
+
+      - name: Check for Job Failure
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue_number = context.issue.number;
+            const failure_comment = `
+            ### Workflow Execution Failed
+            - **Job Status:** Failed
+            `;
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: issue_number,
+              body: failure_comment,
             });
