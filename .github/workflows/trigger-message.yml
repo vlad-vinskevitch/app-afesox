@@ -1,12 +1,12 @@
-name: Print Message on Comment
+name: Generate Message on Comment
 
 on:
   issue_comment:
     types: [created]
 
 jobs:
-  print-message:
-    if: ${{ github.event.issue.pull_request && github.event.comment.body == '/print-message' }}
+  generate-message:
+    if: ${{ github.event.issue.pull_request && github.event.comment.body == '/generate' }}
     runs-on: ubuntu-latest
     steps:
       - name: Post comment to PR
@@ -20,7 +20,6 @@ jobs:
             
             const comment_body = `
             ### Workflow Execution
-            - **Message:** This is a custom message triggered by the '/print-message' comment.
             - **Job Status:** Success
             - **[View Workflow Run](${workflow_run_url})**
             `;
