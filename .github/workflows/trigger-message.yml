@@ -9,7 +9,8 @@ jobs:
     if: ${{ github.event.issue.pull_request && startsWith(github.event.comment.body, '/generate') }}
     runs-on: ubuntu-latest
     steps:
-      - name: Post comment to PR
+      - name: Post initial comment with workflow link
+        id: post-comment
         uses: actions/github-script@v6
         with:
           script: |
@@ -18,13 +19,20 @@ jobs:
             const repo = context.repo;
             const workflow_run_url = `https://github.com/${repo.owner}/${repo.repo}/actions/runs/${run_id}`;
             
-            const comment_body = `
-            ### Workflow Execution
-            - **Job Status:** Success
+            const initial_comment_body = `
+            ### Workflow Execution Started
+            - **Job Status:** Running...
             - **[View Workflow Run](${workflow_run_url})**
             `;
-            github.rest.issues.createComment({
+            await github.rest.issues.createComment({
               ...context.repo,
               issue_number: issue_number,
-              body: comment_body,
+              body: initial_comment_body,
             });
+
+      # Add other steps here
+      - name: Perform some task
+        run: echo "Doing some work..."
+
+      - name: Post completion comment
+        run: echo "Workflow completed."
