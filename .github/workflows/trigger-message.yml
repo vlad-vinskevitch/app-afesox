@@ -5,30 +5,12 @@ on:
     types: [created]
 
 jobs:
-  generate-message:
-    if: ${{ github.event.issue.pull_request && startsWith(github.event.comment.body, '/generate') }}
+  print-message:
+    if: ${{ github.event.issue.pull_request && github.event.comment.body == '/generate' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Post initial comment with workflow link
-        id: post-comment
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const issue_number = context.issue.number;
-            const run_id = process.env.GITHUB_RUN_ID;
-            const repo = context.repo;
-            const workflow_run_url = `https://github.com/${repo.owner}/${repo.repo}/actions/runs/${run_id}`;
-            
-            const initial_comment_body = `
-            ### Workflow Execution Started
-            - **Job Status:** Running...
-            - **[View Workflow Run](${workflow_run_url})**
-            `;
-            await github.rest.issues.createComment({
-              ...context.repo,
-              issue_number: issue_number,
-              body: initial_comment_body,
-            });
+      - name: Checkout code
+        uses: actions/checkout@v2
 
       - name: Parse command and extract name
         id: parse-command
