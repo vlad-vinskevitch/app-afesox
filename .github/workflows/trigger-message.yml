@@ -1,21 +1,18 @@
-name: Print Message on Comment
+name: Print Message on Pull Request
 
 on:
-  issue_comment:
-    types: [created]
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
   print-message:
-    if: ${{ github.event.issue.pull_request && github.event.comment.body == '/print-message' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout PR code
         uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Print to stacktrace
         run: |
           echo "===== Printing to stacktrace 111111====="
-          echo "This is a custom message triggered by the '/print-message' comment."
+          echo "This is a custom message triggered by the PR."
           echo "===== End of stacktrace ====="
