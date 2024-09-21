@@ -77,7 +77,7 @@ jobs:
       - name: Extract ticket number from PR title
         id: extract-ticket-num
         run: |
-          pr_title="${{ github.event.pull_request.title }}"
+          pr_title="${{ github.event.issue.title }}"
           echo "Pull Request Title: $pr_title"
           ticket_num=$(echo "$pr_title" | grep -oP '(?<=\[)[^]]*(?=\])')
           echo "Extracted Ticket Number: $ticket_num"
