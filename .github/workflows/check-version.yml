@@ -30,15 +30,10 @@ jobs:
             echo "is_changed=false" >> $GITHUB_ENV
           fi
 
-      - name: Extract version information
+      - name: Print changed file paths
         if: env.is_changed == 'true'
         run: |
           for FILE in $(git diff --name-only ${{ github.base_ref }} ${{ github.head_ref }} -- 'apis/**/api-first/metadata.yml' 'apis/**/api-first/openapi-rest.yml'); do
-            if [[ "$FILE" == *"openapi-rest.yml"* ]]; then
-              OPENAPI_VERSION=$(grep 'info:' -A 3 "$FILE" | grep 'version:' | awk '{print $2}' | tr -d '\r')
-              echo "OpenAPI version from $FILE: $OPENAPI_VERSION"
-            elif [[ "$FILE" == *"metadata.yml"* ]]; then
-              METADATA_VERSION=$(grep 'api.version:' "$FILE" | awk '{print $2}' | tr -d '\r')
-              echo "Metadata API version from $FILE: $METADATA_VERSION"
-            fi
+            echo "Changed file: $FILE"
           done
+      
