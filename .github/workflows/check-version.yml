@@ -57,9 +57,12 @@ jobs:
         run: |
           METADATA_FILE="$CHANGED_DIR/metadata.yml"
           OPENAPI_FILE="$CHANGED_DIR/openapi-rest.yml"
-          
+
           API_VERSION=$(yq e '.api.version' "$METADATA_FILE")
+          echo "API_VERSION=$API_VERSION" >> $GITHUB_ENV
+
           OPENAPI_VERSION=$(yq e '.info.version' "$OPENAPI_FILE")
+          echo "OPENAPI_VERSION=$OPENAPI_VERSION" >> $GITHUB_ENV
 
       - name: Compare Versions
         if: env.is_changed == 'true'
@@ -71,4 +74,5 @@ jobs:
             echo "Error: Versions in metadata.yml ($API_VERSION) and openapi-rest.yml ($OPENAPI_VERSION) should be the same."
             exit 1
           fi
+      
       
