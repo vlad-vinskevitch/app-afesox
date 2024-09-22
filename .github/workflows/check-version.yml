@@ -38,31 +38,14 @@ jobs:
             echo "Changed directory: $DIR"
           done
 
-      - name: Extract versions from changed directories
+      - name: Check for openapi-rest.yml
         if: env.is_changed == 'true'
         run: |
-          # Use the previously stored changed directories
-          for DIR in $(git diff --name-only ${{ github.base_ref }} ${{ github.head_ref }} -- 'apis/**/api-first/metadata.yml' 'apis/**/api-first/openapi-rest.yml' | xargs -n1 dirname | sort -u); do
-            METADATA_FILE="$DIR/metadata.yml"
-            OPENAPI_FILE="$DIR/openapi-rest.yml"
+          OPENAPI_FILE="$DIR/openapi-rest.yml"
 
-            # Function to extract version and print result
-            extract_version() {
-              local file="$1"
-              local key="$2"
-              local version=$(grep "$key" "$file" | awk '{print $2}' | tr -d '\r')
-              if [[ -n "$version" ]]; then
-                echo "$key from $file: $version"
-              else
-                echo "$key not found in $file"
-              fi
-            }
-
-            # Check and extract versions
-            [[ -f "$METADATA_FILE" ]] && extract_version "$METADATA_FILE" 'api.version:'
-            [[ -f "$OPENAPI_FILE" ]] && extract_version "$OPENAPI_FILE" 'info:' -A 3 | grep 'version:' | awk '{print $2}' | tr -d '\r' | xargs -I {} echo "OpenAPI version from $OPENAPI_FILE: {}" || echo "OpenAPI file not found: $OPENAPI_FILE"
-          done
+          if [[ -f "$OPENAPI_FILE" ]]; then
+            echo "openapi-rest.yml found in $DIR: true"
+          else
+            echo "openapi-rest.yml not found in $DIR: false"
+          fi
       
-      
-      
-
