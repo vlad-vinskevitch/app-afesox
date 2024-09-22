@@ -52,23 +52,19 @@ jobs:
             echo "Changed directory: ${CHANGED_DIR}"
           fi
 
-      - name: Check for Files in Changed Directory
+      - name: Extract Versions from Files
         if: env.is_changed == 'true'
         run: |
           METADATA_FILE="$CHANGED_DIR/metadata.yml"
           OPENAPI_FILE="$CHANGED_DIR/openapi-rest.yml"
 
-          if [[ -f "$METADATA_FILE" ]]; then
-            echo "Found metadata.yml in $CHANGED_DIR"
-          else
-            echo "metadata.yml not found in $CHANGED_DIR"
-          fi
+          # Extract API version
+          API_VERSION=$(yq e '.api.version' "$METADATA_FILE")
+          echo "API version from metadata.yml: $API_VERSION"
 
-          if [[ -f "$OPENAPI_FILE" ]]; then
-            echo "Found openapi-rest.yml in $CHANGED_DIR"
-          else
-            echo "openapi-rest.yml not found in $CHANGED_DIR"
-          fi
-
+          # Extract OpenAPI version
+          OPENAPI_VERSION=$(yq e '.info.version' "$OPENAPI_FILE")
+          echo "OpenAPI version from openapi-rest.yml: $OPENAPI_VERSION"
+      
       
       
