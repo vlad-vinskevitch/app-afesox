@@ -41,10 +41,8 @@ jobs:
       - name: Extract versions from changed directories
         if: env.is_changed == 'true'
         run: |
-          for FILE in $(git diff --name-only ${{ github.base_ref }} ${{ github.head_ref }} -- 'apis/**/api-first/metadata.yml' 'apis/**/api-first/openapi-rest.yml'); do
-            DIR=$(dirname "$FILE")
-
-            # Define the paths for metadata.yml and openapi-rest.yml
+          # Use the previously stored changed directories
+          for DIR in $(git diff --name-only ${{ github.base_ref }} ${{ github.head_ref }} -- 'apis/**/api-first/metadata.yml' 'apis/**/api-first/openapi-rest.yml' | xargs -n1 dirname | sort -u); do
             METADATA_FILE="$DIR/metadata.yml"
             OPENAPI_FILE="$DIR/openapi-rest.yml"
 
@@ -52,13 +50,18 @@ jobs:
             if [[ -f "$METADATA_FILE" ]]; then
               API_VERSION=$(grep 'api.version:' "$METADATA_FILE" | awk '{print $2}' | tr -d '\r')
               echo "API version from $METADATA_FILE: $API_VERSION"
+            else
+              echo "API version not found in $METADATA_FILE"
             fi
 
             # Extract OpenAPI version if openapi-rest.yml exists
             if [[ -f "$OPENAPI_FILE" ]]; then
               OPENAPI_VERSION=$(grep 'info:' -A 3 "$OPENAPI_FILE" | grep 'version:' | awk '{print $2}' | tr -d '\r')
               echo "OpenAPI version from $OPENAPI_FILE: $OPENAPI_VERSION"
+            else
+              echo "OpenAPI version not found in $OPENAPI_FILE"
             fi
           done
+      
       
 
