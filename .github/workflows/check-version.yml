@@ -46,30 +46,23 @@ jobs:
             METADATA_FILE="$DIR/metadata.yml"
             OPENAPI_FILE="$DIR/openapi-rest.yml"
 
-            # Extract API version if metadata.yml exists
-            if [[ -f "$METADATA_FILE" ]]; then
-              API_VERSION=$(grep 'api.version:' "$METADATA_FILE" | awk '{print $2}' | tr -d '\r')
-              if [[ -n "$API_VERSION" ]]; then
-                echo "API version from $METADATA_FILE: $API_VERSION"
+            # Function to extract version and print result
+            extract_version() {
+              local file="$1"
+              local key="$2"
+              local version=$(grep "$key" "$file" | awk '{print $2}' | tr -d '\r')
+              if [[ -n "$version" ]]; then
+                echo "$key from $file: $version"
               else
-                echo "API version not found in $METADATA_FILE"
+                echo "$key not found in $file"
               fi
-            else
-              echo "Metadata file not found: $METADATA_FILE"
-            fi
+            }
 
-            # Extract OpenAPI version if openapi-rest.yml exists
-            if [[ -f "$OPENAPI_FILE" ]]; then
-              OPENAPI_VERSION=$(grep 'info:' -A 3 "$OPENAPI_FILE" | grep 'version:' | awk '{print $2}' | tr -d '\r')
-              if [[ -n "$OPENAPI_VERSION" ]]; then
-                echo "OpenAPI version from $OPENAPI_FILE: $OPENAPI_VERSION"
-              else
-                echo "OpenAPI version not found in $OPENAPI_FILE"
-              fi
-            else
-              echo "OpenAPI file not found: $OPENAPI_FILE"
-            fi
+            # Check and extract versions
+            [[ -f "$METADATA_FILE" ]] && extract_version "$METADATA_FILE" 'api.version:'
+            [[ -f "$OPENAPI_FILE" ]] && extract_version "$OPENAPI_FILE" 'info:' -A 3 | grep 'version:' | awk '{print $2}' | tr -d '\r' | xargs -I {} echo "OpenAPI version from $OPENAPI_FILE: {}" || echo "OpenAPI file not found: $OPENAPI_FILE"
           done
+      
       
       
 
