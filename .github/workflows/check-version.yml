@@ -64,7 +64,11 @@ jobs:
       - name: Compare Versions
         if: env.is_changed == 'true'
         run: |
+          echo "API version from metadata.yml: $API_VERSION"
+          echo "OpenAPI version from openapi-rest.yml: $OPENAPI_VERSION"
+
           if [ "$API_VERSION" != "$OPENAPI_VERSION" ]; then
             echo "Error: Versions in metadata.yml ($API_VERSION) and openapi-rest.yml ($OPENAPI_VERSION) should be the same."
             exit 1
           fi
+      
