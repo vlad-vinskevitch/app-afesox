@@ -20,4 +20,5 @@ jobs:
           fi
 
       - name: Print change status
-        run: echo "Files changed: ${{ env.is_changed }}"
+        run: |
+          echo "Files changed: ${{ env.is_changed }}"
