@@ -50,7 +50,7 @@ components:
           example: Edvard
         password:
           type: string
-          example: qwerty1234
+          example: qwerty1235
   responses:
     BadRequest:
       description: Bad Request
