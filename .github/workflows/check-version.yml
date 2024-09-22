@@ -30,10 +30,11 @@ jobs:
             echo "is_changed=false" >> $GITHUB_ENV
           fi
 
-      - name: Print changed file paths
+      - name: Print changed file directories
         if: env.is_changed == 'true'
         run: |
           for FILE in $(git diff --name-only ${{ github.base_ref }} ${{ github.head_ref }} -- 'apis/**/api-first/metadata.yml' 'apis/**/api-first/openapi-rest.yml'); do
-            echo "Changed file: $FILE"
+            DIR=$(dirname "$FILE")
+            echo "Changed directory: $DIR"
           done
       
