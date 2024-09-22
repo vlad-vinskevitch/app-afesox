@@ -43,20 +43,22 @@ jobs:
         run: |
           for FILE in $(git diff --name-only ${{ github.base_ref }} ${{ github.head_ref }} -- 'apis/**/api-first/metadata.yml' 'apis/**/api-first/openapi-rest.yml'); do
             DIR=$(dirname "$FILE")
-          
+
             # Define the paths for metadata.yml and openapi-rest.yml
             METADATA_FILE="$DIR/metadata.yml"
             OPENAPI_FILE="$DIR/openapi-rest.yml"
-          
-            # Extract versions if the files exist
+
+            # Extract API version if metadata.yml exists
             if [[ -f "$METADATA_FILE" ]]; then
               API_VERSION=$(grep 'api.version:' "$METADATA_FILE" | awk '{print $2}' | tr -d '\r')
               echo "API version from $METADATA_FILE: $API_VERSION"
             fi
-          
+
+            # Extract OpenAPI version if openapi-rest.yml exists
             if [[ -f "$OPENAPI_FILE" ]]; then
               OPENAPI_VERSION=$(grep 'info:' -A 3 "$OPENAPI_FILE" | grep 'version:' | awk '{print $2}' | tr -d '\r')
               echo "OpenAPI version from $OPENAPI_FILE: $OPENAPI_VERSION"
             fi
           done
+      
 
