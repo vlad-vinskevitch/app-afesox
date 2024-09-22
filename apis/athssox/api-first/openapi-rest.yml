@@ -31,7 +31,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserResponseDTO'
+                $ref: '#/components/schemas/UserDTO'
         '400':
           $ref: '#/components/responses/BadRequest'
         '500':
