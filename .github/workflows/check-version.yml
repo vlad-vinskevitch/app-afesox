@@ -33,11 +33,12 @@ jobs:
       - name: Extract version information
         if: env.is_changed == 'true'
         run: |
-          # Extract info.version from openapi-rest.yml
-          OPENAPI_VERSION=$(grep 'info:' -A 3 'apis/**/api-first/openapi-rest.yml' | grep 'version:' | awk '{print $2}' | tr -d '\r')
-          # Extract api.version from metadata.yml
-          METADATA_VERSION=$(grep 'api.version:' 'apis/**/api-first/metadata.yml' | awk '{print $2}' | tr -d '\r')
-
-          echo "OpenAPI version: $OPENAPI_VERSION"
-          echo "Metadata API version: $METADATA_VERSION"
-      
+          for FILE in $(git diff --name-only ${{ github.base_ref }} ${{ github.head_ref }} -- 'apis/**/api-first/metadata.yml' 'apis/**/api-first/openapi-rest.yml'); do
+            if [[ "$FILE" == *"openapi-rest.yml"* ]]; then
+              OPENAPI_VERSION=$(grep 'info:' -A 3 "$FILE" | grep 'version:' | awk '{print $2}' | tr -d '\r')
+              echo "OpenAPI version from $FILE: $OPENAPI_VERSION"
+            elif [[ "$FILE" == *"metadata.yml"* ]]; then
+              METADATA_VERSION=$(grep 'api.version:' "$FILE" | awk '{print $2}' | tr -d '\r')
+              echo "Metadata API version from $FILE: $METADATA_VERSION"
+            fi
+          done
