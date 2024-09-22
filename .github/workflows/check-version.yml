@@ -74,4 +74,34 @@ jobs:
             echo "Error: Versions in metadata.yml ($API_VERSION) and openapi-rest.yml ($OPENAPI_VERSION) should be the same."
             exit 1
           fi
-      
+
+      - name: Extract Versions from develop Branch
+        run: |
+          # Checkout the develop branch
+          git fetch origin develop:develop
+          git checkout develop
+
+          # Set the path to the changed directory
+          METADATA_FILE="$CHANGED_DIR/metadata.yml"
+          OPENAPI_FILE="$CHANGED_DIR/openapi-rest.yml"
+
+          # Extract API version from develop branch
+          API_VERSION=$(yq e '.api.version' "$METADATA_FILE")
+          echo "DEV_API_VERSION=$API_VERSION" >> $GITHUB_ENV
+
+          # Extract OpenAPI version from develop branch
+          OPENAPI_VERSION=$(yq e '.info.version' "$OPENAPI_FILE")
+          echo "DEV_OPENAPI_VERSION=$OPENAPI_VERSION" >> $GITHUB_ENV
+          
+      - name: Compare Versions with develop
+        if: env.is_changed == 'true'
+        run: |
+          echo "API version from develop branch: ${{ env.DEV_API_VERSION }}"
+          echo "OpenAPI version from develop branch: ${{ env.DEV_OPENAPI_VERSION }}"
+          echo "API version from pull request: ${{ env.API_VERSION }}"
+          echo "OpenAPI version from pull request: ${{ env.OPENAPI_VERSION }}"
+
+          if [ "${{ env.API_VERSION }}" = "${{ env.DEV_API_VERSION }}" ] && [ "${{ env.OPENAPI_VERSION }}" = "${{ env.DEV_OPENAPI_VERSION }}" ]; then
+            echo "Error: The versions in the pull request and develop branch are the same. Please increase the versions."
+            exit 1
+          fi
