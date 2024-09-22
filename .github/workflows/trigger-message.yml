@@ -85,7 +85,12 @@ jobs:
             exit 1
           fi
 
+          # Extract and format the ticket number
           ticket_num=$(echo "$pr_title" | grep -oP '(?<=\[)[^]]*(?=\])' | tr '[:upper:]' '[:lower:]')
+
+          # Replace any forward slashes with hyphens
+          ticket_num=$(echo "$ticket_num" | tr '/' '-')
+          
           echo "::set-output name=ticket_num::$ticket_num"
 
       - name: Read metadata and find api-spec-type and definition-path
