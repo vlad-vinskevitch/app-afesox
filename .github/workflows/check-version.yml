@@ -55,6 +55,6 @@ jobs:
       - name: Print Changed Directories
         if: env.is_changed == 'true'
         run: |
-          echo "Changed directories: $CHANGED_DIRS"
+          echo "Changed directory: $CHANGED_DIR"
       
       
