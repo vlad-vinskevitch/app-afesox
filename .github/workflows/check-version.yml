@@ -30,22 +30,20 @@ jobs:
             echo "is_changed=false" >> $GITHUB_ENV
           fi
 
-      - name: Print changed file directories
+      - name: Print and Store Changed File Directories
         if: env.is_changed == 'true'
         run: |
+          CHANGED_DIRS=""
           for FILE in $(git diff --name-only ${{ github.base_ref }} ${{ github.head_ref }} -- 'apis/**/api-first/metadata.yml' 'apis/**/api-first/openapi-rest.yml'); do
             DIR=$(dirname "$FILE")
             echo "Changed directory: $DIR"
+            CHANGED_DIRS="$CHANGED_DIRS $DIR"
           done
+          echo "CHANGED_DIRS=${CHANGED_DIRS}" >> $GITHUB_ENV
 
-      - name: Check for openapi-rest.yml
+      - name: Print Changed Directories
         if: env.is_changed == 'true'
         run: |
-          OPENAPI_FILE="$DIR/openapi-rest.yml"
-
-          if [[ -f "$OPENAPI_FILE" ]]; then
-            echo "openapi-rest.yml found in $DIR: true"
-          else
-            echo "openapi-rest.yml not found in $DIR: false"
-          fi
+          echo "Changed directories: $CHANGED_DIRS"
+      
       
