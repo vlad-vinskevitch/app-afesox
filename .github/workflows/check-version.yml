@@ -52,9 +52,23 @@ jobs:
             echo "Changed directory: ${CHANGED_DIR}"
           fi
 
-      - name: Print Changed Directories
+      - name: Check for Files in Changed Directory
         if: env.is_changed == 'true'
         run: |
-          echo "Changed directory: $CHANGED_DIR"
+          METADATA_FILE="$CHANGED_DIR/metadata.yml"
+          OPENAPI_FILE="$CHANGED_DIR/openapi-rest.yml"
+
+          if [[ -f "$METADATA_FILE" ]]; then
+            echo "Found metadata.yml in $CHANGED_DIR"
+          else
+            echo "metadata.yml not found in $CHANGED_DIR"
+          fi
+
+          if [[ -f "$OPENAPI_FILE" ]]; then
+            echo "Found openapi-rest.yml in $CHANGED_DIR"
+          else
+            echo "openapi-rest.yml not found in $CHANGED_DIR"
+          fi
+
       
       
