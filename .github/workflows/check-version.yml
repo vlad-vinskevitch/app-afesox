@@ -21,16 +21,16 @@ jobs:
       - name: Check for changes in `metadata.yml` and `openapi-rest.yml`
         id: check_changes
         run: |
-          # Fetch both the base and head branches to ensure they are available for comparison
-          git fetch origin ${{ github.base_ref }} ${{ github.head_ref }}
-          
+          # Fetch both the base and head branches
+          git fetch origin ${{ github.base_ref }}:${{ github.base_ref }}
+          git fetch origin ${{ github.head_ref }}:${{ github.head_ref }}
+
           # Check if any metadata.yml or openapi-rest.yml files were changed
-          if git diff --name-only origin/${{ github.base_ref }} origin/${{ github.head_ref }} | grep -E 'apis/.+/api-first/(metadata.yml|openapi-rest.yml)'; then
+          if git diff --name-only ${{ github.base_ref }} ${{ github.head_ref }} | grep -E 'apis/.+/api-first/(metadata.yml|openapi-rest.yml)'; then
             echo "is_changed=true" >> $GITHUB_ENV
           else
             echo "is_changed=false" >> $GITHUB_ENV
           fi
-
 
       - name: Print change status
         run: |
