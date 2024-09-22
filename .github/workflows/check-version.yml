@@ -3,17 +3,32 @@ name: Validate version
 on:
   pull_request:
     types: [opened, synchronize, reopened, edited]
-    paths:
-      - 'apis/**/api-first/metadata.yml'
-      - 'apis/**/api-first/openapi-rest.yml'
 
 jobs:
   validate:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set is_changed to true
-        run: echo "is_changed=true" >> $GITHUB_ENV
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch all history for all branches
+
+      - name: Check for changes in `metadata.yml` and `openapi-rest.yml`
+        id: check_changes
+        run: |
+          # Fetch the base branch and the head branch
+          git fetch origin ${{ github.base_ref }}:${{ github.base_ref }}
+          git fetch origin ${{ github.head_ref }}:${{ github.head_ref }}
+
+          # Check for changes in metadata.yml or openapi-rest.yml
+          CHANGED_FILES=$(git diff --name-only ${{ github.base_ref }} ${{ github.head_ref }} -- 'apis/**/api-first/metadata.yml' 'apis/**/api-first/openapi-rest.yml')
+          
+          if [ -n "$CHANGED_FILES" ]; then
+            echo "is_changed=true" >> $GITHUB_ENV
+          else
+            echo "is_changed=false" >> $GITHUB_ENV
+          fi
 
       - name: Print change status
         run: |
