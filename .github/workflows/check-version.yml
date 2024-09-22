@@ -12,7 +12,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Fetch all history for all branches
+          fetch-depth: 0
 
       - name: Check for changes in `metadata.yml` and `openapi-rest.yml`
         id: check_changes
@@ -30,6 +30,14 @@ jobs:
             echo "is_changed=false" >> $GITHUB_ENV
           fi
 
-      - name: Print change status
+      - name: Extract version information
+        if: env.is_changed == 'true'
         run: |
-          echo "Files changed: ${{ env.is_changed }}"
+          # Extract info.version from openapi-rest.yml
+          OPENAPI_VERSION=$(grep 'info:' -A 3 'apis/**/api-first/openapi-rest.yml' | grep 'version:' | awk '{print $2}' | tr -d '\r')
+          # Extract api.version from metadata.yml
+          METADATA_VERSION=$(grep 'api.version:' 'apis/**/api-first/metadata.yml' | awk '{print $2}' | tr -d '\r')
+
+          echo "OpenAPI version: $OPENAPI_VERSION"
+          echo "Metadata API version: $METADATA_VERSION"
+      
