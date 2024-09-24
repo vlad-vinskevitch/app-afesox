@@ -51,6 +51,7 @@ components:
         password:
           type: string
           example: qwerty1234
+
     UserResponseDTO:
       type: object
       properties:
