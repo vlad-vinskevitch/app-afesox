@@ -31,13 +31,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserResponseDTO'
+                $ref: '#/components/some/UserResponseDTO'
         '400':
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
 components:
+  some:
+    UserResponseDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 12345
+        username:
+          type: string
+          example: Edvard
+
   schemas:
     UserDTO:
       type: object
@@ -51,17 +63,6 @@ components:
         password:
           type: string
           example: qwerty1234
-
-    UserResponseDTO:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-          example: 12345
-        username:
-          type: string
-          example: Edvard
   responses:
     BadRequest:
       description: Bad Request
