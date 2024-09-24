@@ -38,7 +38,7 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 
 components:
-  some:
+  schemas:
     UserResponseDTO:
       type: object
       properties:
@@ -49,8 +49,6 @@ components:
         username:
           type: string
           example: Edvard
-
-  schemas:
     UserDTO:
       type: object
       required:
