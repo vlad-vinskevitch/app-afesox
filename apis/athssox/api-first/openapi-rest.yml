@@ -24,7 +24,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserResponseDTO'
+              $ref: '#/components/schemas/UserDTO'
       responses:
         '201':
           description: Success
@@ -49,6 +49,18 @@ components:
         username:
           type: string
           example: Edvard
+    UserDTO:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          example: Edvard
+        password:
+          type: string
+          example: qwerty1234
   responses:
     BadRequest:
       description: Bad Request
