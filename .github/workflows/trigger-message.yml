@@ -9,10 +9,10 @@ jobs:
     if: ${{ github.event.issue.pull_request && startsWith(github.event.comment.body, '/generate') }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout the pull request branch
         uses: actions/checkout@v2
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.event.issue.pull_request.head.ref }}
 
       - name: Post initial comment with workflow link
         id: post-initial-comment
@@ -75,12 +75,6 @@ jobs:
           echo "Comment: ${{ github.event.comment.body }}"
           api_name=$(echo '${{ github.event.comment.body }}' | grep -oP '(?<=--name ")[^"]*')
           echo "::set-output name=api_name::$api_name"
-
-      # New step: Checkout the current branch before proceeding
-      - name: Checkout current branch
-        uses: actions/checkout@v2
-        with:
-          ref: ${{ github.head_ref }}
 
       - name: Extract ticket number from PR title
         id: extract-ticket-num
