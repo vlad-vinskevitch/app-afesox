@@ -12,12 +12,13 @@ jobs:
       - name: Checkout the pull request branch
         uses: actions/checkout@v2
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
+          ref: ${{ github.event.issue.pull_request.head.ref }}
           fetch-depth: 0
 
-      - name: Print current branch name
+      - name: Fetch pull request SHA and checkout
         run: |
-          echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
+          git fetch origin ${{ github.event.issue.pull_request.head.sha }} --depth=1
+          git checkout ${{ github.event.issue.pull_request.head.sha }}
 
       - name: Post initial comment with workflow link
         id: post-initial-comment
