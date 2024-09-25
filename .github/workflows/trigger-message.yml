@@ -20,6 +20,10 @@ jobs:
           git fetch origin ${{ github.event.issue.pull_request.head.sha }} --depth=1
           git checkout ${{ github.event.issue.pull_request.head.sha }}
 
+      - name: Print current branch name
+        run: |
+          echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
+
       - name: Post initial comment with workflow link
         id: post-initial-comment
         uses: actions/github-script@v6
