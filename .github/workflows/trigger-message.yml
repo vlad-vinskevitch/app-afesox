@@ -12,12 +12,12 @@ jobs:
       - name: Checkout the pull request branch
         uses: actions/checkout@v2
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
 
       - name: Print current branch name
         run: |
           echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
-      
 
       - name: Post initial comment with workflow link
         id: post-initial-comment
