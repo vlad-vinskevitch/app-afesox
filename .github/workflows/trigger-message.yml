@@ -16,10 +16,11 @@ jobs:
 
       - name: Print pull request branch name
         run: |
-          if [[ -n "${{ github.event.issue.pull_request.head.ref }}" ]]; then
-            echo "Pull request branch: ${{ github.event.issue.pull_request.head.ref }}"
+          if [[ -n "${{ github.event.pull_request.head.ref }}" ]]; then
+            echo "Pull request branch: ${{ github.event.pull_request.head.ref }}"
           else
-            echo "No pull request branch found."
+            echo "No pull request branch found, checking from issue context."
+            echo "Pull request branch: ${{ github.event.issue.pull_request.head.ref }}"
           fi
 
       - name: Post initial comment with workflow link
