@@ -14,14 +14,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Print pull request branch name
+      - name: Install GitHub CLI
         run: |
-          if [[ -n "${{ github.event.pull_request.head.ref }}" ]]; then
-            echo "Pull request branch: ${{ github.event.pull_request.head.ref }}"
-          else
-            echo "No pull request branch found, checking from issue context."
-            echo "Pull request branch: ${{ github.event.issue.pull_request.head.ref }}"
-          fi
+          sudo apt-get install gh
+
+      - name: Fetch pull request branch
+        run: |
+          PR_NUMBER=$(echo "${{ github.event.issue.number }}")
+          PR_BRANCH=$(gh pr view $PR_NUMBER --json headRefName -q '.headRefName')
+          echo "Pull request branch: $PR_BRANCH"
+      
 
       - name: Post initial comment with workflow link
         id: post-initial-comment
