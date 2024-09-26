@@ -9,23 +9,14 @@ jobs:
     if: ${{ github.event.issue.pull_request && startsWith(github.event.comment.body, '/generate') }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout the correct pull request branch
+      - name: Checkout the correct branch
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
 
-      - name: Check out pull request branch
+      - name: Print pull request branch name
         run: |
-          echo "GITHUB_REF: $GITHUB_REF"
-          echo "GITHUB_HEAD_REF: $GITHUB_HEAD_REF"
-          if [ -n "${{ github.event.issue.pull_request.head.ref }}" ]; then
-            git fetch origin ${{ github.event.issue.pull_request.head.ref }}:refs/remotes/origin/${{ github.event.issue.pull_request.head.ref }}
-            git checkout ${{ github.event.issue.pull_request.head.ref }}
-          fi
-
-      - name: Print current branch name
-        run: |
-          echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
+          echo "Pull request branch: ${{ github.head_ref }}"
 
       - name: Post initial comment with workflow link
         id: post-initial-comment
