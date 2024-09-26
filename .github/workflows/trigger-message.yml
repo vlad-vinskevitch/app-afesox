@@ -9,28 +9,21 @@ jobs:
     if: ${{ github.event.issue.pull_request && startsWith(github.event.comment.body, '/generate') }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout the correct branch
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
-      - name: Install GitHub CLI
-        run: |
-          sudo apt-get install gh
-
-      - name: Fetch pull request branch
+      - name: Checkout pull request branch
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Install GitHub CLI
+          sudo apt-get install -y gh
+
+          # Fetch pull request branch
           PR_NUMBER=$(echo "${{ github.event.issue.number }}")
           PR_BRANCH=$(gh pr view $PR_NUMBER --json headRefName -q '.headRefName')
           echo "Pull request branch: $PR_BRANCH"
-          echo "BRANCH_NAME=$PR_BRANCH" >> $GITHUB_ENV
 
-      - name: Checkout the pull request branch
-        run: |
-          git fetch origin $BRANCH_NAME
-          git checkout $BRANCH_NAME
+          # Checkout the pull request branch
+          git fetch origin $PR_BRANCH
+          git checkout $PR_BRANCH
 
       - name: Post initial comment with workflow link
         id: post-initial-comment
