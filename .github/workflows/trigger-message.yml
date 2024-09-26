@@ -9,17 +9,25 @@ jobs:
     if: ${{ github.event.issue.pull_request && startsWith(github.event.comment.body, '/generate') }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout pull request branch
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Fetch and checkout pull request branch
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Install GitHub CLI
-          sudo apt-get install -y gh
-
-          # Fetch pull request branch
+          # Fetch pull request branch using GitHub CLI
           PR_NUMBER=$(echo "${{ github.event.issue.number }}")
           PR_BRANCH=$(gh pr view $PR_NUMBER --json headRefName -q '.headRefName')
           echo "Pull request branch: $PR_BRANCH"
+
+          # Ensure the repository is a valid git repository
+          if [ ! -d ".git" ]; then
+            echo "ERROR: Not a git repository!"
+            exit 1
+          fi
 
           # Checkout the pull request branch
           git fetch origin $PR_BRANCH
