@@ -19,10 +19,13 @@ jobs:
           sudo apt-get install gh
 
       - name: Fetch pull request branch
+        env:
+          GH_TOKEN: ${{ secrets.APP_AFESOX }}
         run: |
           PR_NUMBER=$(echo "${{ github.event.issue.number }}")
           PR_BRANCH=$(gh pr view $PR_NUMBER --json headRefName -q '.headRefName')
           echo "Pull request branch: $PR_BRANCH"
+      
       
 
       - name: Post initial comment with workflow link
