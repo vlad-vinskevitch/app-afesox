@@ -16,7 +16,7 @@ jobs:
 
       - name: Print pull request branch name
         run: |
-          echo "Pull request branch: ${{ github.head_ref }}"
+          echo "Pull request branch: ${{ github.event.pull_request.head.ref }}"
 
       - name: Post initial comment with workflow link
         id: post-initial-comment
