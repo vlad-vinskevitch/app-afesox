@@ -15,9 +15,6 @@
         <!--suppress UnresolvedMavenProperty -->
         <env.artifact.name>${env.NAME}</env.artifact.name>
 
-<!--        <env.project.artifactId>aleto</env.project.artifactId>-->
-<!--        <env.project.version>1</env.project.version>-->
-<!--        <env.artifact.name>aleto</env.artifact.name>-->
     </properties>
 
     <dependencies>
