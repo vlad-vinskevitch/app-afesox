@@ -36,9 +36,86 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
+  /api/v1/registration:
+    post:
+      description: Service that registry user by e-mail
+      summary: API for registry user
+      operationId: registration
+      tags:
+        - User
+      requestBody:
+        description: User registration body
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegistrationBody'
+      responses:
+        '201':
+          $ref: '#/components/responses/Created'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v1/login:
+    post:
+      description: Service that make login user in system
+      summary: API for login user
+      operationId: login
+      tags:
+        - User
+      requestBody:
+        description: USer login body
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLoginBody'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserLoginResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
+    UserRegistrationBody:
+      type: object
+      properties:
+        username:
+          type: string
+          example: Edvard
+        password:
+          type: string
+          example: qwerty1234
+        email:
+          type: string
+          example: hello@mail.com
+    UserLoginBody:
+      type: object
+      properties:
+        email:
+          type: string
+          example: hello@mail.com
+        password:
+          type: string
+          example: password
+    UserLoginResponse:
+        type: object
+        properties:
+          token:
+            type: string
+            example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+          expires:
+            type: string
+            example: 3600
     UserResponseDTO:
       type: object
       properties:
@@ -61,11 +138,16 @@ components:
         password:
           type: string
           example: qwerty1234
-        email:
-          type: string
-          example: hello@mail.com
   responses:
+    OK:
+      description: Success
+    Created:
+      description: Created
     BadRequest:
       description: Bad Request
+    Unauthorized:
+        description: Invalid username or password.
+    Forbidden:
+        description: Your account is suspended.
     InternalServerError:
       description: Internal Server Error
