@@ -51,9 +51,15 @@ paths:
               $ref: '#/components/schemas/UserRegistrationBody'
       responses:
         '201':
-          $ref: '#/components/responses/Created'
+          description:  User successfully registered
+          content:
+            application/json:
+              schema:
+                type: string
         '400':
           $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/UserExist'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /api/v1/login:
@@ -145,6 +151,8 @@ components:
       description: Created
     BadRequest:
       description: Bad Request
+    UserExist:
+      description: User Already exists
     Unauthorized:
         description: Invalid username or password.
     Forbidden:
