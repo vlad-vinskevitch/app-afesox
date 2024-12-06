@@ -55,7 +55,7 @@ paths:
           content:
             application/json:
               schema:
-                type: string
+                $ref: '#/components/schemas/UserAuthResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '409':
@@ -81,7 +81,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserLoginResponse'
+                $ref: '#/components/schemas/UserAuthResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -113,7 +113,7 @@ components:
         password:
           type: string
           example: password
-    UserLoginResponse:
+    UserAuthResponse:
         type: object
         properties:
           token:
